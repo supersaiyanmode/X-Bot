@@ -8,7 +8,7 @@
 class ChessLine{
     bool horiz;
     int lineNo;
-    double slope_;
+    double slope_,slopeI_;
     int intercept_;
     cv::Point p1,p2;
 public:
@@ -17,6 +17,7 @@ public:
     bool horizontal();
     bool vertical();
     double slope();
+    double slopeI();
     cv::Point getPoint(int);
     static std::pair<std::vector<ChessLine>, std::vector<ChessLine> > findLines(
             const std::vector<cv::Vec4i>&);

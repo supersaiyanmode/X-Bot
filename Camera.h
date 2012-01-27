@@ -11,7 +11,7 @@ namespace xbot{
     class Camera{
         cv::VideoCapture capture;
     public:
-        Camera();
+        Camera(int);
         xbot::Image grab();
         ~Camera();
     };

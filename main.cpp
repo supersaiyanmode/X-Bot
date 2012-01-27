@@ -14,7 +14,7 @@
 
 int main(int argc, char **argv){
     std::cout<<"Initiating..\n";
-    xbot::Camera c;
+    xbot::Camera c(1);
     xbot::Window w;
     std::vector<cv::Point2f> corners;
     

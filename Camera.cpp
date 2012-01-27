@@ -1,6 +1,6 @@
 #include "Camera.h"
 using namespace xbot;
-Camera::Camera():capture(1){
+Camera::Camera(int n):capture(n){
     if (!capture.isOpened())
         throw 1;
 }
