@@ -14,12 +14,13 @@
 
 int main(int argc, char **argv){
     std::cout<<"Initiating..\n";
-    xbot::Camera c(1);
+    xbot::Camera c(2);
     xbot::Window w;
     std::vector<cv::Point2f> corners;
     
     while (xbot::Window::waitKey(1500) != 27){
         cv::Mat m = c.grab().getImage();
+        //static cv::Mat m = cv::imread("pic.jpg");
         ChessBoard cb(m);
         cb.drawLines();
         //cb.drawCorners();

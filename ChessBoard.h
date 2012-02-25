@@ -7,39 +7,39 @@
 
 class ChessLine{
     bool horiz;
-    int lineNo;
     double slope_,slopeI_;
     int intercept_;
     cv::Point p1,p2;
 public:
     int intercept() const;
     ChessLine(const cv::Point&, const cv::Point&);
-    bool horizontal();
-    bool vertical();
-    double slope();
-    double slopeI();
+    bool horizontal() const;
+    bool vertical() const;
+    double slope() const;
+    double slopeI() const;
     cv::Point getPoint(int);
     static std::pair<std::vector<ChessLine>, std::vector<ChessLine> > findLines(
             const std::vector<cv::Vec4i>&);
 };
 
-class Cell{
+struct Cell{
     int row, column;
     int color;
     int coin;
-    std::vector<cv::Point> cellCorners;
-public:
-
+    std::vector<cv::Point> corners;
+    
+    Cell();
+    unsigned int area();
 };
 
 class ChessBoard{
     cv::Mat& img;
-    std::vector<std::vector<cv::Point> > corners;
+    std::vector<std::vector<Cell> > cells;
 public:
     ChessBoard(cv::Mat&);
     
     void drawCorners();
-    void drawLines();
+    int drawLines();
 };
 
 #endif
