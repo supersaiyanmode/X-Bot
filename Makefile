@@ -1,6 +1,6 @@
 CPPCOMPILER=g++
 LIBS=`pkg-config --libs opencv`
-UNITS=obj/Camera.o obj/ChessBoard.o obj/Image.o obj/main.o obj/Transformations.o obj/Window.o
+UNITS=obj/Camera.o obj/ChessBoard.o obj/main.o obj/Window.o
 
 all: xbotAll
 

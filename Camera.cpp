@@ -5,10 +5,10 @@ Camera::Camera(int n):capture(n){
         throw 1;
 }
 
-Image Camera::grab(){
+cv::Mat Camera::grab(){
     cv::Mat frame;
     capture >> frame;   //that right shift operator overloaded to capture a frame .. :D
-    return Image(frame);
+    return frame;
 }
 
 Camera::~Camera(){

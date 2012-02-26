@@ -24,12 +24,13 @@ public:
 
 struct Cell{
     int row, column;
-    int color;
-    int coin;
-    std::vector<cv::Point> corners;
+    enum CellType{BLACK='#', WHITE='.', RED='R', GREEN='G', BLUE='B'} type;
+    
+    cv::Mat image;
+    std::vector<cv::Point> corners,subCorners;
     
     Cell();
-    unsigned int area();
+    int area();
 };
 
 class ChessBoard{

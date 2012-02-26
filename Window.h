@@ -5,7 +5,6 @@
 #include "opencv/highgui.h"
 #include <string>
 #include <vector>
-#include "Image.h"
 
 
 namespace xbot{
@@ -15,7 +14,6 @@ namespace xbot{
         static std::string getNewWindowId();
     public:
         Window();
-        void showImage(const xbot::Image&);
         void showImage(const cv::Mat&);
         static char waitKey(int=10);
         ~Window();

@@ -6,13 +6,12 @@
 #include "opencv/highgui.h"
 #include <queue>
 
-#include "Image.h"
 namespace xbot{
     class Camera{
         cv::VideoCapture capture;
     public:
         Camera(int);
-        xbot::Image grab();
+        cv::Mat grab();
         ~Camera();
     };
 }

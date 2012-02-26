@@ -10,10 +10,6 @@ Window::Window():windowId(Window::getNewWindowId()){
     cv::namedWindow(windowId,1);
 }
 
-void Window::showImage(const xbot::Image& m){
-    showImage(m.getImage());
-}
-
 void Window::showImage(const cv::Mat& m){
     cv::imshow(windowId, m);
 }
@@ -29,7 +25,7 @@ std::string Window::getNewWindowId(){
 
 Window::~Window(){
     windowIds.erase(std::find(windowIds.begin(),windowIds.end(),windowId));
-    //cv::destroyWindow(windowId);
+    cvDestroyWindow(windowId.c_str());
 }
 
 char Window::waitKey(int time){

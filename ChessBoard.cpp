@@ -1,8 +1,9 @@
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 #include <cstdio>
 #include "ChessBoard.h"
-#include "Transformations.h"
+#include "Window.h"
 //###########CHESSLINE################
 
 ChessLine::ChessLine(const cv::Point& p, const cv::Point& q):p1(p), p2(q){
@@ -62,9 +63,10 @@ cv::Point operator^(const ChessLine& left, const ChessLine& right){
 //############CELL###############
 Cell::Cell(){
     corners.resize(4);
+    subCorners.resize(4);
 }
 
-unsigned int Cell::area(){
+int Cell::area(){
     //use that crappy two triangle area method ..
     //MUST: pass in strict clockwise or anti ..
     //nahi toh you will get non-convex poly, formula fails..
@@ -90,7 +92,12 @@ void ChessBoard::drawCorners(){
 }
 
 int ChessBoard::drawLines(){
-    cv::Mat m = xbot::toGrayScale(xbot::Image(img)).getImage();
+    cv::Mat mainImage = img.clone();
+    cv::Mat bwImg(img.size(),8);
+    cv::cvtColor(img,bwImg,CV_RGB2GRAY);
+    
+    
+    cv::Mat m = bwImg.clone();
     
     cv::erode(m,m,cv::Mat());
     cv::dilate(m,m,cv::Mat());
@@ -222,25 +229,111 @@ int ChessBoard::drawLines(){
             cv::Point p =  horizLinesPruned[i] ^ vertLinesPruned[j];
             corners[i][j] = p;
             cv::circle(img, p,4, cv::Scalar(0,255,0),-1);
-            
             //fill up the this->cells
             if (i > 0 && j > 0){
                 cells[i-1][j-1].corners[0] = corners[i-1][j-1];
                 cells[i-1][j-1].corners[1] = corners[i-1][j];
                 cells[i-1][j-1].corners[2] = corners[i][j];
                 cells[i-1][j-1].corners[3] = corners[i][j-1];
+                
+                int left = std::min(corners[i-1][j-1].x,corners[i][j-1].x),
+                    right = std::max(corners[i-1][j].x,corners[i][j].x),
+                    top = std::min(corners[i-1][j-1].y,corners[i-1][j].y),
+                    bottom = std::max(corners[i][j-1].y,corners[i][j].y);
+                //the subsection of the image ..
+                cells[i-1][j-1].image = mainImage(
+                    cv::Range(top, bottom+1), //row Range
+                    cv::Range(left,right+1)   //col Range
+                );
+                
+                //subcorners == corners wrt to subimage
+                cells[i-1][j-1].subCorners[0] = cv::Point(
+                    corners[i-1][j-1].x - left,
+                    corners[i-1][j-1].y - top
+                );
+                cells[i-1][j-1].subCorners[1] = cv::Point(
+                    corners[i-1][j].x - left,
+                    corners[i-1][j].y - top
+                );
+                cells[i-1][j-1].subCorners[2] = cv::Point(
+                    corners[i][j].x - left,
+                    corners[i][j].y - top
+                );
+                cells[i-1][j-1].subCorners[3] = cv::Point(
+                    corners[i][j-1].x - left,
+                    corners[i][j-1].y - top
+                );
             }
         }
     }
     
+    /////////////////
+    /*
+    in the for loop below .. check if circles exist ..
+    if so .. check the channel which is brightest ..
+    else .. the cell is empty .. check whther it is b/w..
+    */
+    //////////////////
+    
     //perform detection of color ..
+    
     for (int i=0; i<8; i++){
         for (int j=0; j<8; j++){
-            cv::Mat mask(img.size(), CV_8UC1);
-            cv::fillConvexPoly(mask, &(cells[i][j].corners[0]),4,1.0);
+            cv::Mat bwCircleImg(cells[i][j].image.size(),8);
+            cv::cvtColor(cells[i][j].image,bwCircleImg,CV_RGB2GRAY);
             
-            unsigned long long dotProduct = mask.dot(m);
-            std::cout<<dotProduct/cells[i][j].area()<<" ";
+            //check if circles exist..
+            std::vector<cv::Vec3f> circles;
+            cv::HoughCircles(bwCircleImg, circles, CV_HOUGH_GRADIENT,
+                        3, 200, 200, 100);
+            
+            if (circles.size()){ //circles exist
+                if (circles.size() != 1){
+                    std::cout<<"More than 1 circles found at cell: "
+                        <<i<<","<<j<<std::endl; 
+                    return 0;
+                }
+                //draw all circles..
+                /*std::cout<<"Coin found at cell: "<<i<<","<<j<<std::endl;
+                for (std::vector<cv::Vec3f>::iterator it=circles.begin();
+                        it != circles.end(); it++){
+                    xbot::Window w;
+                    cv::circle(cells[i][j].image, 
+                            cv::Point((*it)[0],(*it)[1]),
+                            4, cv::Scalar(0,255,0),-1);
+                    w.showImage(cells[i][j].image);
+                    w.waitKey(0);
+                }*/
+                
+                //use the intensity of two channels R and B to settle this..
+                enum {CHANNEL_BLUE, CHANNEL_GREEN, CHANNEL_RED};
+                
+                //prepare mask..
+                cv::Mat mask = cv::Mat::zeros(bwCircleImg.size(), CV_8UC1);
+                int radius = circles[0][2];
+                cv::circle(mask, cv::Point(circles[0][0],circles[0][1]),radius,1,-1);
+                
+                //split into channels
+                std::vector<cv::Mat> channels(3);
+                cv::split(cells[i][j].image, channels);
+                
+                //checking RED Channel
+                int resultRed = mask.dot(channels[CHANNEL_RED])/(3.14159*radius*radius);
+                
+                //checking BLUE Channel
+                int resultBlue = mask.dot(channels[CHANNEL_BLUE])/(3.14159*radius*radius);
+                
+                cells[i][j].type = resultRed > resultBlue? Cell::RED : Cell::BLUE;
+            }else{
+                //(black n white)
+                const int BW_THRESH = 100;
+                cv::Mat mask = cv::Mat::zeros(bwCircleImg.size(), CV_8UC1);
+                cv::fillConvexPoly(mask, &(cells[i][j].subCorners[0]),4,1);
+                
+                int result = mask.dot(bwCircleImg)/cells[i][j].area();
+                cells[i][j].type = (result <= BW_THRESH)? Cell::BLACK : Cell::WHITE;
+            }
+            std::cout<<(char)cells[i][j].type<<" ";
         }
         std::cout<<std::endl;
     }
