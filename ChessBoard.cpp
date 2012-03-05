@@ -4,6 +4,7 @@
 #include <cstdio>
 #include "ChessBoard.h"
 #include "Window.h"
+
 //###########CHESSLINE################
 
 ChessLine::ChessLine(const cv::Point& p, const cv::Point& q):p1(p), p2(q){
@@ -78,8 +79,10 @@ int Cell::area(){
     return ret/2;
 }
 //############CHESSBOARD###############
+int ChessBoard::total=0;
+int ChessBoard::totalDetected=0;
 ChessBoard::ChessBoard(cv::Mat& m):img(m),
-    cells(8, std::vector<Cell>(8,Cell())){
+    cells(8, std::vector<Cell>(8,Cell())),good_(false){
     
 }
     
@@ -99,15 +102,23 @@ int ChessBoard::drawLines(){
     
     cv::Mat m = bwImg.clone();
     
-    cv::erode(m,m,cv::Mat());
-    cv::dilate(m,m,cv::Mat());
+    //cv::erode(m,m,cv::Mat());
+    //cv::dilate(m,m,cv::Mat());
     
     cv::Canny(m,m,50,200);
     cv::GaussianBlur(m,m,cv::Size(5,5),2);
     cv::threshold(m,m,50,255,cv::THRESH_BINARY);
-    
+    //img = m;
+    //return 0;
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(m, lines, 1, CV_PI/180.0,20,300,30);
+    cv::HoughLinesP(m,   //the image
+                    lines, //out - vector of vec4i ..
+                    0.5, //linear accuracy of the accumulator
+                    CV_PI/180.0, //radial accuracy
+                    20,  //max parallel distance of lines to be considered as one..
+                    300, //min length of the line -- condition
+                    30 //max breakage in the line .. along the line ..
+                );
     
     for (int i=0, len=lines.size(); 0 && i<len; i++){
         //draw the effing line!
@@ -208,17 +219,21 @@ int ChessBoard::drawLines(){
         vertLinesPruned.push_back(newCBLine);
     }
     
+    
     std::cout<<"Vertical lines count: "<<vertLinesPruned.size()<<std::endl;
-    if (horizLinesPruned.size() != 9 || vertLinesPruned.size() != 9){
-        std::cout<<"Bad detection..\n";
-        return 0;
-    }
     //draw the effing line!
     for (int i=0, len=vertLinesPruned.size(); i<len; i++){
         cv::line(img, vertLinesPruned[i].getPoint(0), vertLinesPruned[i].getPoint(1),
                  cv::Scalar(255,0,0),2,8);
     }
     
+    total++;
+    if (horizLinesPruned.size() != 9 || vertLinesPruned.size() != 9){
+        std::cout<<"Bad detection..\n";
+        std::cout<<"Accuracy as of now: "<<totalDetected/double(total)<<std::endl;
+        return 0;
+    }
+    good_ = true;
     
     //Now awesome cr@p begins ..
     
@@ -337,5 +352,22 @@ int ChessBoard::drawLines(){
         }
         std::cout<<std::endl;
     }
+    totalDetected++;
     return 1;
+}
+
+bool ChessBoard::good(){
+    return good_;
+}
+
+std::string ChessBoard::str(){
+    std::string s;
+    if (!good())
+        return "";
+    for (int i=0; i<8; i++){
+        for (int j=0; j<8; j++){
+            s.append(1, (char)cells[i][j].type);
+        }
+    }
+    return s;
 }

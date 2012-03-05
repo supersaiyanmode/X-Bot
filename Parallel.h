@@ -9,12 +9,20 @@ class Parallel{
     static unsigned char data;
     static unsigned char status;
     
-    unsigned int arr[8], stat[8];
+    void setHighNibble(unsigned char);
+    void setLowNibble(unsigned char);
+    unsigned char getHighNibble();
+    unsigned char getLowNibble();
     
-    unsigned int& operator[](int);
-    const unsigned int& operator[](int) const;
-    unsigned int& operator()(int);
-    const unsigned int& operator()(int) const;
+    //status pins..
+    void setStatus1();
+    void setStatus2();
+    void setStatus3();
+    
+    unsigned int readStatus1();
+    unsigned int readStatus2();
+    unsigned int readStatus3();
+
 };
 
 #endif //PARALLEL_H

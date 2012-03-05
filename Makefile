@@ -1,11 +1,17 @@
 CPPCOMPILER=g++
 LIBS=`pkg-config --libs opencv`
-UNITS=obj/Camera.o obj/ChessBoard.o obj/main.o obj/Window.o
+UNITS=obj/Camera.o obj/ChessBoard.o obj/main.o obj/Window.o \
+	obj/CheckersServer/Server.o obj/CheckersServer/SocketUtils.o
 
 all: xbotAll
 
 xbotAll: $(UNITS)
 	$(CPPCOMPILER) $(UNITS) $(LIBS) -g -o xbot
+
+obj/CheckersServer/%.o: CheckersServer/%.cpp CheckersServer/%.h
+	@mkdir -p obj/CheckersServer
+	$(CPPCOMPILER) -g -c $< -o $@
+
 
 obj/%.o: %.cpp %.h
 	@mkdir -p obj

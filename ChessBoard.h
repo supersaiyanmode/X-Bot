@@ -11,15 +11,13 @@ class ChessLine{
     int intercept_;
     cv::Point p1,p2;
 public:
-    int intercept() const;
     ChessLine(const cv::Point&, const cv::Point&);
     bool horizontal() const;
     bool vertical() const;
     double slope() const;
     double slopeI() const;
+    int intercept() const;
     cv::Point getPoint(int);
-    static std::pair<std::vector<ChessLine>, std::vector<ChessLine> > findLines(
-            const std::vector<cv::Vec4i>&);
 };
 
 struct Cell{
@@ -36,11 +34,14 @@ struct Cell{
 class ChessBoard{
     cv::Mat& img;
     std::vector<std::vector<Cell> > cells;
+    bool good_;
+    static int totalDetected, total;
 public:
     ChessBoard(cv::Mat&);
-    
+    std::string str();
     void drawCorners();
     int drawLines();
+    bool good();
 };
 
 #endif
