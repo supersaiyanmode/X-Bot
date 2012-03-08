@@ -4,6 +4,8 @@
 #include <vector>
 #include <algorithm>
 #include "opencv/cv.h"
+#include "Window.h"
+#include "Camera.h"
 
 class ChessLine{
     bool horiz;
@@ -22,7 +24,7 @@ public:
 
 struct Cell{
     int row, column;
-    enum CellType{BLACK='#', WHITE='.', RED='R', GREEN='G', BLUE='B'} type;
+    enum CellType{BLACK='.', WHITE=' ', RED='c', GREEN='p', BLUE='B'} type;
     
     cv::Mat image;
     std::vector<cv::Point> corners,subCorners;
@@ -31,17 +33,21 @@ struct Cell{
     int area();
 };
 
-class ChessBoard{
-    cv::Mat& img;
-    std::vector<std::vector<Cell> > cells;
-    bool good_;
+class CheckersBoard{
+    std::string board, prevBoard;
+    bool moveReady;
+    bool running;
     static int totalDetected, total;
+    xbot::Camera camera;
+    xbot::Window window;
+    void detect(int);
+    std::string analyse(cv::Mat);
 public:
-    ChessBoard(cv::Mat&);
+    CheckersBoard(int);
+    void startDetection();
     std::string str();
     void drawCorners();
-    int drawLines();
-    bool good();
+    bool pollMove(int&, int&, int&, int&);
 };
 
 #endif

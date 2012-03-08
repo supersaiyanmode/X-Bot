@@ -9,7 +9,6 @@ struct Point2D {
 
 class StepperMotor{
     size_t curSteps;
-    static const char array[] = {8,12,4,6,2,3,1,9};
 public:
     StepperMotor();
     char stepRight();
@@ -17,12 +16,12 @@ public:
 };
 
 class Arm {
-    double arm1Length, arm2Length;
+    double armLength;
     double theta1, theta2;
     Parallel p;
     Point2D basePoint,curPoint;
 public:
-    Arm(double, double, double, double);
+    Arm(double, double, double);
     void moveTo(double, double);
 };
 

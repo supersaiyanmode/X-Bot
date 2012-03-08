@@ -2,9 +2,9 @@
 #include <iostream>
 #include <algorithm>
 #include <cstdio>
-#include "ChessBoard.h"
+#include "CheckersBoard.h"
 #include "Window.h"
-
+#include "Thread.cpp"
 //###########CHESSLINE################
 
 ChessLine::ChessLine(const cv::Point& p, const cv::Point& q):p1(p), p2(q){
@@ -79,23 +79,100 @@ int Cell::area(){
     return ret/2;
 }
 //############CHESSBOARD###############
-int ChessBoard::total=0;
-int ChessBoard::totalDetected=0;
-ChessBoard::ChessBoard(cv::Mat& m):img(m),
-    cells(8, std::vector<Cell>(8,Cell())),good_(false){
+#define ERR_BAD_DETECTION "BAD DETECTION"
+
+int CheckersBoard::total=0;
+int CheckersBoard::totalDetected=0;
+CheckersBoard::CheckersBoard(int cam):moveReady(false),running(true),camera(cam){
     
 }
-    
-void ChessBoard::drawCorners(){
-    std::vector<cv::Point2f> corners;
+
+void CheckersBoard::drawCorners(){
+    /*std::vector<cv::Point2f> corners;
     cv::findChessboardCorners(img,cv::Size(7,7), corners);
     for (int i=0; i<corners.size(); i++){
         cv::circle(img, cv::Point(corners[i].x,corners[i].y),4, cv::Scalar(0,255,0),-1);
-    }
+    }*/
 }
 
-int ChessBoard::drawLines(){
+void CheckersBoard::startDetection(){
+    Thread<CheckersBoard,int> t(*this, &CheckersBoard::detect, 0);
+    t.start();
+}
+
+void CheckersBoard::detect(int){
+    const static int RELIABLE_NUM = 5;
+    while (running){
+        std::vector<std::string> states;
+        while (1){
+            std::string res;
+            cv::Mat img;
+            do{
+                img = camera.grab();
+                window.showImage(img);
+                res = analyse(img);
+                window.waitKey(800);
+            }while (res.length() != 64);
+            
+            //first run, set prevBoard
+            if (prevBoard == "")
+                prevBoard = board = res;
+            
+            if (res == prevBoard) //continue loop during first run..
+                continue;
+            states.push_back(res);
+            std::cout<<"Pushing state\n";
+            
+            for (int last = states.size()-1, cur = last; cur >=0; --cur)
+                if (states[cur] != states[last]){
+                    std::cout<<"Erased "<<cur+1<<"states(s)\n";
+                    states.erase(states.begin(), states.begin()+cur+1);
+                    break;
+                }
+            
+            if (states.size() >= RELIABLE_NUM){
+                std::cout<<"Got reliable size: "<<states.size()<<"\n";
+                break;
+            }
+        }
+        prevBoard = board;
+        board = states[0];
+        moveReady = true;
+        while (moveReady){
+            Thread<CheckersBoard,int>::sleep(500);
+        }
+    }
+}
+bool CheckersBoard::pollMove(int& r1, int& c1, int& r2, int& c2){
+    if (!moveReady)
+        return false;
+    moveReady = false;
+    size_t pos;
+    r1 = -1;
+    while ((pos=board.find_first_of("pP"))!=std::string::npos){
+        if (prevBoard[pos] != board[pos]){
+            r1 = pos/8;
+            c1 = pos%8;
+            break;
+        }
+    }
+    if (r1 == -1)
+        return false;
+    
+    while ((pos=prevBoard.find_first_of("."))!=std::string::npos){
+        if (prevBoard[pos] != board[pos]){
+            r2 = pos/8;
+            c2 = pos%8;
+            break;
+        }
+    }
+    if (r2 == -1)
+        return false;
+    return true;
+}
+std::string CheckersBoard::analyse(cv::Mat img){
     cv::Mat mainImage = img.clone();
+    
     cv::Mat bwImg(img.size(),8);
     cv::cvtColor(img,bwImg,CV_RGB2GRAY);
     
@@ -106,8 +183,12 @@ int ChessBoard::drawLines(){
     //cv::dilate(m,m,cv::Mat());
     
     cv::Canny(m,m,50,200);
-    cv::GaussianBlur(m,m,cv::Size(5,5),2);
-    cv::threshold(m,m,50,255,cv::THRESH_BINARY);
+    //cv::GaussianBlur(m,m,cv::Size(5,5),2);
+    //cv::threshold(m,m,50,255,cv::THRESH_BINARY);
+    cv::dilate(m,m,cv::Mat());
+    static xbot::Window w;
+    w.showImage(m);
+    w.waitKey(1);
     //img = m;
     //return 0;
     std::vector<cv::Vec4i> lines;
@@ -231,11 +312,11 @@ int ChessBoard::drawLines(){
     if (horizLinesPruned.size() != 9 || vertLinesPruned.size() != 9){
         std::cout<<"Bad detection..\n";
         std::cout<<"Accuracy as of now: "<<totalDetected/double(total)<<std::endl;
-        return 0;
+        return ERR_BAD_DETECTION;
     }
-    good_ = true;
     
     //Now awesome cr@p begins ..
+    std::vector<std::vector<Cell> > cells(8, std::vector<Cell>(8,Cell()));
     
     //the 9*9 corners..
     cv::Point corners[9][9];
@@ -256,11 +337,14 @@ int ChessBoard::drawLines(){
                     top = std::min(corners[i-1][j-1].y,corners[i-1][j].y),
                     bottom = std::max(corners[i][j-1].y,corners[i][j].y);
                 //the subsection of the image ..
-                cells[i-1][j-1].image = mainImage(
-                    cv::Range(top, bottom+1), //row Range
-                    cv::Range(left,right+1)   //col Range
-                );
-                
+                try{
+                    cells[i-1][j-1].image = mainImage(
+                        cv::Range(top, bottom+1), //row Range
+                        cv::Range(left,right+1)   //col Range
+                    );
+                }catch(...){
+                    return ERR_BAD_DETECTION;
+                }
                 //subcorners == corners wrt to subimage
                 cells[i-1][j-1].subCorners[0] = cv::Point(
                     corners[i-1][j-1].x - left,
@@ -306,7 +390,7 @@ int ChessBoard::drawLines(){
                 if (circles.size() != 1){
                     std::cout<<"More than 1 circles found at cell: "
                         <<i<<","<<j<<std::endl; 
-                    return 0;
+                    return ERR_BAD_DETECTION;
                 }
                 //draw all circles..
                 /*std::cout<<"Coin found at cell: "<<i<<","<<j<<std::endl;
@@ -335,10 +419,10 @@ int ChessBoard::drawLines(){
                 //checking RED Channel
                 int resultRed = mask.dot(channels[CHANNEL_RED])/(3.14159*radius*radius);
                 
-                //checking BLUE Channel
-                int resultBlue = mask.dot(channels[CHANNEL_BLUE])/(3.14159*radius*radius);
+                //checking GREEN Channel
+                int resultGreen = mask.dot(channels[CHANNEL_GREEN])/(3.14159*radius*radius);
                 
-                cells[i][j].type = resultRed > resultBlue? Cell::RED : Cell::BLUE;
+                cells[i][j].type = resultRed > resultGreen? Cell::RED : Cell::GREEN;
             }else{
                 //(black n white)
                 const int BW_THRESH = 100;
@@ -348,26 +432,23 @@ int ChessBoard::drawLines(){
                 int result = mask.dot(bwCircleImg)/cells[i][j].area();
                 cells[i][j].type = (result <= BW_THRESH)? Cell::BLACK : Cell::WHITE;
             }
+        }
+    }
+    totalDetected++;
+    //current hack .. one green coin less that we have..
+    cells[7][6].type = Cell::GREEN;
+    std::string s;
+    for (int i=0; i<8; i++){
+        for (int j=0; j<8; j++){
+            s.append(1,cells[i][j].type);
             std::cout<<(char)cells[i][j].type<<" ";
         }
         std::cout<<std::endl;
     }
-    totalDetected++;
-    return 1;
-}
-
-bool ChessBoard::good(){
-    return good_;
-}
-
-std::string ChessBoard::str(){
-    std::string s;
-    if (!good())
-        return "";
-    for (int i=0; i<8; i++){
-        for (int j=0; j<8; j++){
-            s.append(1, (char)cells[i][j].type);
-        }
-    }
+    //std::cout<<s<<std::endl;
     return s;
+}
+
+std::string CheckersBoard::str(){
+    return board;
 }
