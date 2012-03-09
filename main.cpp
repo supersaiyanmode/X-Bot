@@ -55,7 +55,7 @@ int main(int argc, char **argv){
             //5 2 4 3
             r1 = 7-r1;
             r2 = 7-r2;
-            int from = 8*((r1+1)/2) + c1/2, to = 8*((r2+1)/2) + c2/2;
+            int from = 4*r1 + c1/2, to = 4*r2 + c2/2;
             std::cout<<"Making move: "<<from<<" -> "<<to<<std::endl;
             game.nextMove(from,to);
             game.display();
