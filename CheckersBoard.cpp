@@ -1,6 +1,7 @@
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <queue>
 #include <cstdio>
 #include "CheckersBoard.h"
 #include "Window.h"
@@ -109,9 +110,9 @@ void CheckersBoard::detect(int){
             cv::Mat img;
             do{
                 img = camera.grab();
-                window.showImage(img);
                 res = analyse(img);
-                window.waitKey(800);
+                window.showImage(img);
+                window.waitKey(res.length()==64? 800:0);
             }while (res.length() != 64);
             
             //first run, set prevBoard
@@ -121,19 +122,8 @@ void CheckersBoard::detect(int){
             if (res == prevBoard) //continue loop during first run..
                 continue;
             states.push_back(res);
-            std::cout<<"Pushing state\n";
-            
-            for (int last = states.size()-1, cur = last; cur >=0; --cur)
-                if (states[cur] != states[last]){
-                    std::cout<<"Erased "<<cur+1<<"states(s)\n";
-                    states.erase(states.begin(), states.begin()+cur+1);
-                    break;
-                }
-            
-            if (states.size() >= RELIABLE_NUM){
-                std::cout<<"Got reliable size: "<<states.size()<<"\n";
-                break;
-            }
+            if (states.size() > RELIABLE_NUM)
+                states.erase(states.begin());
         }
         prevBoard = board;
         board = states[0];
@@ -143,12 +133,13 @@ void CheckersBoard::detect(int){
         }
     }
 }
+
 bool CheckersBoard::pollMove(int& r1, int& c1, int& r2, int& c2){
-    if (!moveReady)
-        return false;
-    moveReady = false;
+    static std::string prevBoard = "";
+    
     size_t pos;
     r1 = -1;
+    //polls changes for pP coins ..
     while ((pos=board.find_first_of("pP"))!=std::string::npos){
         if (prevBoard[pos] != board[pos]){
             r1 = pos/8;
@@ -174,7 +165,7 @@ std::string CheckersBoard::analyse(cv::Mat img){
     cv::Mat mainImage = img.clone();
     
     cv::Mat bwImg(img.size(),8);
-    cv::cvtColor(img,bwImg,CV_RGB2GRAY);
+    cv::cvtColor(img,bwImg,CV_BGR2GRAY);
     
     
     cv::Mat m = bwImg.clone();
@@ -185,7 +176,9 @@ std::string CheckersBoard::analyse(cv::Mat img){
     cv::Canny(m,m,50,200);
     //cv::GaussianBlur(m,m,cv::Size(5,5),2);
     //cv::threshold(m,m,50,255,cv::THRESH_BINARY);
+    
     cv::dilate(m,m,cv::Mat());
+    
     static xbot::Window w;
     w.showImage(m);
     w.waitKey(1);
@@ -201,10 +194,10 @@ std::string CheckersBoard::analyse(cv::Mat img){
                     30 //max breakage in the line .. along the line ..
                 );
     
-    for (int i=0, len=lines.size(); 0 && i<len; i++){
+    for (int i=0, len=lines.size();i<len; i++){
         //draw the effing line!
         cv::Point p1(lines[i][0],lines[i][1]),p2(lines[i][2],lines[i][3]);
-        cv::line(img, p1, p2, cv::Scalar(255,0,0),2,8);
+        cv::line(img, p1, p2, cv::Scalar(255,0,255),2,8);
     }
     
     std::vector<ChessLine> horizLines, vertLines, horizLinesPruned, vertLinesPruned;
@@ -228,13 +221,15 @@ std::string CheckersBoard::analyse(cv::Mat img){
     }
     std::cout.flush();
     
-    for (int i=0, len=horizLines.size(); i<len-1; i++){
+    for (int i=0, len=horizLines.size(); i<len; i++){
         int fromIndex = i, toIndex = i-1;
         int minIntercept=horizLines[i].intercept(), maxIntercept=horizLines[i].intercept();
         
         while (maxIntercept - minIntercept < horizThreshold){ //threshold
             toIndex++;
             i++;
+            if (i >= len)
+                break;
             minIntercept = std::min(minIntercept, horizLines[i].intercept());
             maxIntercept = std::max(maxIntercept, horizLines[i].intercept());
         }
@@ -273,13 +268,15 @@ std::string CheckersBoard::analyse(cv::Mat img){
     }
     std::cout.flush();
     
-    for (int i=0, len=vertLines.size(); i<len-1; i++){
+    for (int i=0, len=vertLines.size(); i<len; i++){
         int fromIndex = i, toIndex = i-1;
         int minIntercept=vertLines[i].intercept(), maxIntercept=vertLines[i].intercept();
         
         while (maxIntercept - minIntercept < vertThreshold){ //threshold
             toIndex++;
             i++;
+            if (i >= len)
+                break;
             minIntercept = std::min(minIntercept, vertLines[i].intercept());
             maxIntercept = std::max(maxIntercept, vertLines[i].intercept());
         }
@@ -379,7 +376,7 @@ std::string CheckersBoard::analyse(cv::Mat img){
     for (int i=0; i<8; i++){
         for (int j=0; j<8; j++){
             cv::Mat bwCircleImg(cells[i][j].image.size(),8);
-            cv::cvtColor(cells[i][j].image,bwCircleImg,CV_RGB2GRAY);
+            cv::cvtColor(cells[i][j].image,bwCircleImg,CV_BGR2GRAY);
             
             //check if circles exist..
             std::vector<cv::Vec3f> circles;
@@ -393,13 +390,12 @@ std::string CheckersBoard::analyse(cv::Mat img){
                     return ERR_BAD_DETECTION;
                 }
                 //draw all circles..
-                /*std::cout<<"Coin found at cell: "<<i<<","<<j<<std::endl;
-                for (std::vector<cv::Vec3f>::iterator it=circles.begin();
+                /*for (std::vector<cv::Vec3f>::iterator it=circles.begin();
                         it != circles.end(); it++){
                     xbot::Window w;
                     cv::circle(cells[i][j].image, 
                             cv::Point((*it)[0],(*it)[1]),
-                            4, cv::Scalar(0,255,0),-1);
+                            4, cv::Scalar(0,255,0),(*it)[2]);
                     w.showImage(cells[i][j].image);
                     w.waitKey(0);
                 }*/
@@ -441,11 +437,12 @@ std::string CheckersBoard::analyse(cv::Mat img){
     for (int i=0; i<8; i++){
         for (int j=0; j<8; j++){
             s.append(1,cells[i][j].type);
-            std::cout<<(char)cells[i][j].type<<" ";
+            //std::cout<<(char)cells[i][j].type<<" ";
         }
-        std::cout<<std::endl;
+        //std::cout<<std::endl;
     }
     //std::cout<<s<<std::endl;
+    std::cout<<"************Got an image!****************\n";
     return s;
 }
 

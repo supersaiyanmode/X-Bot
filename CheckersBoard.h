@@ -34,7 +34,7 @@ struct Cell{
 };
 
 class CheckersBoard{
-    std::string board, prevBoard;
+    std::string board;
     bool moveReady;
     bool running;
     static int totalDetected, total;
