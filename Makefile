@@ -1,4 +1,5 @@
 CPPCOMPILER=g++
+FLAGS=-p -g
 LIBS=`pkg-config --libs opencv`
 UNITS=obj/Camera.o obj/CheckersBoard.o obj/main.o obj/Window.o \
 	obj/CheckersServer/Server.o obj/CheckersServer/SocketUtils.o\
@@ -8,20 +9,20 @@ UNITS=obj/Camera.o obj/CheckersBoard.o obj/main.o obj/Window.o \
 all: xbotAll
 
 xbotAll: $(UNITS)
-	$(CPPCOMPILER) $(UNITS) $(LIBS) -g -o xbot
+	$(CPPCOMPILER) $(FLAGS) $(UNITS) $(LIBS) -o xbot
 
 obj/game/%.o : game/%.cpp
 	@mkdir -p obj/game
-	$(CPPCOMPILER) -g -c $< -o $@
+	$(CPPCOMPILER) $(FLAGS)  -c $< -o $@
 
 obj/main.o: main.cpp
 	@mkdir -p obj
-	$(CPPCOMPILER) -g -c $< -o $@
+	$(CPPCOMPILER) $(FLAGS)  -c $< -o $@
 
 obj/%.o: %.cpp %.h
 	@mkdir -p obj/game
-	$(CPPCOMPILER) -g -c $< -o $@
+	$(CPPCOMPILER) $(FLAGS)  -c $< -o $@
 
 
 clean:
-	rm -rf obj/*o xbot
+	rm -rf $(UNITS) xbot

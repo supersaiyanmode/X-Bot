@@ -24,7 +24,7 @@ public:
 
 struct Cell{
     int row, column;
-    enum CellType{BLACK='.', WHITE=' ', RED='c', GREEN='p', BLUE='B'} type;
+    enum CellType{BLACK=' ', WHITE='.', RED='c', GREEN='p', BLUE='B'} type;
     
     cv::Mat image;
     std::vector<cv::Point> corners,subCorners;
@@ -34,20 +34,15 @@ struct Cell{
 };
 
 class CheckersBoard{
-    std::string board;
-    bool moveReady;
-    bool running;
     static int totalDetected, total;
     xbot::Camera camera;
     xbot::Window window;
-    void detect(int);
     std::string analyse(cv::Mat);
 public:
     CheckersBoard(int);
-    void startDetection();
-    std::string str();
+    std::string state();
     void drawCorners();
-    bool pollMove(int&, int&, int&, int&);
+    bool getMove(std::string, int&, int&, int&, int&);
 };
 
 #endif

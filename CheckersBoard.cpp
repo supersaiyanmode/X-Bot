@@ -6,6 +6,8 @@
 #include "CheckersBoard.h"
 #include "Window.h"
 #include "Thread.cpp"
+
+#define DEBUG 0
 //###########CHESSLINE################
 
 ChessLine::ChessLine(const cv::Point& p, const cv::Point& q):p1(p), p2(q){
@@ -84,7 +86,7 @@ int Cell::area(){
 
 int CheckersBoard::total=0;
 int CheckersBoard::totalDetected=0;
-CheckersBoard::CheckersBoard(int cam):moveReady(false),running(true),camera(cam){
+CheckersBoard::CheckersBoard(int cam):camera(cam){
     
 }
 
@@ -96,71 +98,74 @@ void CheckersBoard::drawCorners(){
     }*/
 }
 
-void CheckersBoard::startDetection(){
-    Thread<CheckersBoard,int> t(*this, &CheckersBoard::detect, 0);
-    t.start();
-}
-
-void CheckersBoard::detect(int){
-    const static int RELIABLE_NUM = 5;
-    while (running){
-        std::vector<std::string> states;
-        while (1){
-            std::string res;
-            cv::Mat img;
-            do{
-                img = camera.grab();
-                res = analyse(img);
-                window.showImage(img);
-                window.waitKey(res.length()==64? 800:0);
-            }while (res.length() != 64);
-            
-            //first run, set prevBoard
-            if (prevBoard == "")
-                prevBoard = board = res;
-            
-            if (res == prevBoard) //continue loop during first run..
-                continue;
-            states.push_back(res);
-            if (states.size() > RELIABLE_NUM)
-                states.erase(states.begin());
+std::string CheckersBoard::state(){
+    const static int RELIABLE_NUM = 2;
+    std::vector<std::string> states;
+    while (1){
+        std::string res;
+        cv::Mat img;
+        do{
+            img = camera.grab();
+            res = analyse(img);
+            window.showImage(img);
+            window.waitKey(res.length()==64? 800:800);
+        }while (res.length() != 64);
+        
+        states.push_back(res);
+        if (states.size() > RELIABLE_NUM)
+            states.erase(states.begin());
+        
+        bool same = true;
+        for (int i=0; i<states.size() -1 && same; i++){
+            if (states[i] != states[i+1]) 
+                same = false;
         }
-        prevBoard = board;
-        board = states[0];
-        moveReady = true;
-        while (moveReady){
-            Thread<CheckersBoard,int>::sleep(500);
-        }
+        if (same && states.size() == RELIABLE_NUM)
+            return res;
     }
+    return "";
 }
 
-bool CheckersBoard::pollMove(int& r1, int& c1, int& r2, int& c2){
-    static std::string prevBoard = "";
+bool CheckersBoard::getMove(std::string curState, int& r1, int& c1, int& r2, int& c2){
+    std::cout<<"Checking for player move...";
+    std::string newState = state();
+    if (newState.length() != 64){
+        std::cout<<"[Bad new state]\n";
+        return false;
+    }
     
-    size_t pos;
+    size_t pos=-1;
     r1 = -1;
     //polls changes for pP coins ..
-    while ((pos=board.find_first_of("pP"))!=std::string::npos){
-        if (prevBoard[pos] != board[pos]){
+    while ((pos=curState.find_first_of("pP",pos+1))!=std::string::npos){
+        if (curState[pos] != newState[pos]){
+            std::cout<<"Found inequality at: "<<pos<<std::endl;
             r1 = pos/8;
             c1 = pos%8;
             break;
         }
     }
-    if (r1 == -1)
+    if (r1 == -1){
+        std::cout<<"No change!\n";
         return false;
-    
-    while ((pos=prevBoard.find_first_of("."))!=std::string::npos){
-        if (prevBoard[pos] != board[pos]){
+    }
+    pos = -1;
+    while ((pos=curState.find_first_of(".",pos+1))!=std::string::npos){
+        if (curState[pos] != newState[pos]){
+            std::cout<<"Found inequality at: "<<pos<<std::endl;
             r2 = pos/8;
             c2 = pos%8;
             break;
         }
     }
-    if (r2 == -1)
+    if (r2 == -1){
+        std::cout<<"Cant find piece that appeared.\n";
         return false;
+    }
+    std::cout<<"[Got!]\n";
     return true;
 }
+
 std::string CheckersBoard::analyse(cv::Mat img){
     cv::Mat mainImage = img.clone();
     
@@ -250,9 +255,9 @@ std::string CheckersBoard::analyse(cv::Mat img){
                             cv::Point(img.size().width, avgSlope*img.size().width + avgIntercept));
         horizLinesPruned.push_back(newCBLine);
     }
-    
+#if DEBUG
     std::cout<<"Horizontal lines count: "<<horizLinesPruned.size()<<std::endl;
-    
+#endif    
     //draw the effing Pruned lines..
     for (int i=0, len=horizLinesPruned.size(); i<len; i++){
         cv::line(img, horizLinesPruned[i].getPoint(0), horizLinesPruned[i].getPoint(1),
@@ -297,8 +302,9 @@ std::string CheckersBoard::analyse(cv::Mat img){
         vertLinesPruned.push_back(newCBLine);
     }
     
-    
+#if DEBUG   
     std::cout<<"Vertical lines count: "<<vertLinesPruned.size()<<std::endl;
+#endif
     //draw the effing line!
     for (int i=0, len=vertLinesPruned.size(); i<len; i++){
         cv::line(img, vertLinesPruned[i].getPoint(0), vertLinesPruned[i].getPoint(1),
@@ -307,8 +313,10 @@ std::string CheckersBoard::analyse(cv::Mat img){
     
     total++;
     if (horizLinesPruned.size() != 9 || vertLinesPruned.size() != 9){
+#if DEBUG
         std::cout<<"Bad detection..\n";
         std::cout<<"Accuracy as of now: "<<totalDetected/double(total)<<std::endl;
+#endif
         return ERR_BAD_DETECTION;
     }
     
@@ -442,10 +450,6 @@ std::string CheckersBoard::analyse(cv::Mat img){
         //std::cout<<std::endl;
     }
     //std::cout<<s<<std::endl;
-    std::cout<<"************Got an image!****************\n";
+    (std::cout<<".").flush();
     return s;
-}
-
-std::string CheckersBoard::str(){
-    return board;
 }
