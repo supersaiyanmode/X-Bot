@@ -36,13 +36,12 @@ Server::Server(int p,bool forceUse):port(p),callback(0){
 }
 
 void Server::start(){
-    std::cout<<"Inside Start()...\n";
     Thread<Server,int>(*this, &Server::acceptProc,0).start();
 }
 
 void Server::acceptProc(int){
     serverRunning = true;
-    std::cout<<"Server started!"<<std::endl;
+    std::cout<<"Server: Listening on port "<<port<<std::endl;
     while (serverRunning){
         sockaddr_in client;
         socklen_t clilen = sizeof(client);

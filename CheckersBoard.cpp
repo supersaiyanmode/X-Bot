@@ -6,6 +6,7 @@
 #include "CheckersBoard.h"
 #include "Window.h"
 #include "Thread.cpp"
+#include "Config.h"
 
 #define DEBUG 0
 //###########CHESSLINE################
@@ -99,7 +100,7 @@ void CheckersBoard::drawCorners(){
 }
 
 std::string CheckersBoard::state(){
-    const static int RELIABLE_NUM = 2;
+    int RELIABLE_NUM = atoi(CONFIG["RELIABLE_DETECTION_COUNT"]);
     std::vector<std::string> states;
     while (1){
         std::string res;

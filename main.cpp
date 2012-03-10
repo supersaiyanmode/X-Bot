@@ -6,8 +6,9 @@
 #include "CheckersBoard.h"
 #include "Server.h"
 #include "game/Game.h"
+#include "Config.h"
 
-CheckersBoard board(1);
+CheckersBoard board(atoi(CONFIG["CAMERA_NUM"]));
 CheckersGame game;
 
 void displayState(std::string s){
@@ -28,7 +29,7 @@ std::string checkerStatus(){
 }
 
 int main(int argc, char **argv){
-    Server s(44101);
+    Server s(atoi(CONFIG["SERVER_PORT"]));
     s.setCallback(checkerStatus);
     s.start();
     
@@ -49,6 +50,7 @@ int main(int argc, char **argv){
     }
     //game.display();
     int r1,c1,r2,c2;
+    int sleepTime = atoi(CONFIG["USER_MOVE_POLL_SLEEP_TIME"]);
     while (1){
         if (board.getMove(game.state(), r1,c1,r2,c2)){
             std::cout<<"Params: "<<r1<<" "<<c1<<" "<<r2<<" "<<c2<<std::endl;
@@ -60,11 +62,11 @@ int main(int argc, char **argv){
             game.nextMove(from,to);
             game.display();
             while (game.state() != board.state()){
-                std::cout<<"Hammer <enter> after doing robot's move as abov!: ";
+                std::cout<<"Hammer <enter> after doing robot's move as above!: ";
                 std::getchar();
             }
         }
-        Thread<CheckersBoard,int>::sleep(500);
+        Thread<CheckersBoard,int>::sleep(sleepTime);
     }
     return 0;
 }

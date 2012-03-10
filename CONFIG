@@ -1,0 +1,4 @@
+RELIABLE_DETECTION_COUNT        3
+SERVER_PORT                     44312
+USER_MOVE_POLL_SLEEP_TIME       500
+CAMERA_NUM                      1

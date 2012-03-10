@@ -138,7 +138,7 @@ void setPlayerMouseDown(int i){
     case PLAYER_PIECE:
     case PLAYER_KING:
         if (default_piece != NO_PIECE ) {
-                    std::cout<<"Default piece is not NO_PIECE"<<std::endl;
+            std::cout<<"Error 1: Default piece is not NO_PIECE"<<std::endl;
         }
         if (!compulsory_jump_found) {
             mouse_move(i);
@@ -148,6 +148,7 @@ void setPlayerMouseDown(int i){
                 break;
             }
         } else {
+            std::cout<<"Error 2: Possibly entering non-compulsory jump.\n";
             std::cout<<"Playing chord.wav"<<std::endl;
             break;
         }
@@ -185,7 +186,7 @@ void setPlayerMouseDown(int i){
         break;
 
     default:
-        std::cout<<"Invalid move. No piece!!"<<std::endl;
+        std::cout<<"Error 3: Invalid move. No piece!!"<<std::endl;
         break;
     }
 }
