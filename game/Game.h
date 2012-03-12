@@ -22,7 +22,7 @@ public:
     std::string value();
     void display();
     
-    void nextMove(int, int);
+    int nextMove(int, int);
     
     std::vector<PieceMove> moves();
 };

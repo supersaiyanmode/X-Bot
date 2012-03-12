@@ -62,6 +62,7 @@ cv::Point operator^(const ChessLine& left, const ChessLine& right){
         return cv::Point(x,y);
     }else{
         std::cout<<"WHAT?!?!?!?! Intersect (probably) parallel lines?"<<std::endl;
+        return cv::Point();
     }
 }
 
@@ -100,7 +101,7 @@ void CheckersBoard::drawCorners(){
 }
 
 std::string CheckersBoard::state(){
-    int RELIABLE_NUM = atoi(CONFIG["RELIABLE_DETECTION_COUNT"]);
+    size_t RELIABLE_NUM = atoi(CONFIG["RELIABLE_DETECTION_COUNT"]);
     std::vector<std::string> states;
     while (1){
         std::string res;
@@ -113,11 +114,11 @@ std::string CheckersBoard::state(){
         }while (res.length() != 64);
         
         states.push_back(res);
-        if (states.size() > RELIABLE_NUM)
+        if (states.size() > (unsigned)RELIABLE_NUM)
             states.erase(states.begin());
         
         bool same = true;
-        for (int i=0; i<states.size() -1 && same; i++){
+        for (size_t i=0; i<states.size() -1 && same; i++){
             if (states[i] != states[i+1]) 
                 same = false;
         }

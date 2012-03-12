@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <signal.h>
 #include "CheckersBoard.h"
 #include "Server.h"
 #include "game/Game.h"
@@ -10,6 +11,11 @@
 
 CheckersBoard board(atoi(CONFIG["CAMERA_NUM"]));
 CheckersGame game;
+
+void sigInterrupt(int sig){
+    std::cout<<"Signal: "<<sig<<std::endl;
+    exit(0);
+}
 
 void displayState(std::string s){
     if (s.length() != 64)

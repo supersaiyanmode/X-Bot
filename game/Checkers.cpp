@@ -112,7 +112,6 @@ char* getComputerState(){
 
 
 void playDone(){
-    STATE_PTR p;
     if (!avoid_suicide_called &&
         q->num > 1 && q->ptr[0]->value < -1000 && search_depth != 2) {
         delete_SUCESSOR(q);
@@ -128,7 +127,7 @@ void playDone(){
     }
 }
 
-void setPlayerMouseDown(int i){
+int setPlayerMouseDown(int i){
     int j;
     
     i = (i/4)*4+(3-(i%4)); // i is board position clicked in. See "tables.cpp"
@@ -139,6 +138,7 @@ void setPlayerMouseDown(int i){
     case PLAYER_KING:
         if (default_piece != NO_PIECE ) {
             std::cout<<"Error 1: Default piece is not NO_PIECE"<<std::endl;
+            return 1;
         }
         if (!compulsory_jump_found) {
             mouse_move(i);
@@ -149,8 +149,7 @@ void setPlayerMouseDown(int i){
             }
         } else {
             std::cout<<"Error 2: Possibly entering non-compulsory jump.\n";
-            std::cout<<"Playing chord.wav"<<std::endl;
-            break;
+            return 2;
         }
     case HI_LIGHTED_PLAYER_PIECE:
     case HI_LIGHTED_PLAYER_KING:
@@ -187,8 +186,9 @@ void setPlayerMouseDown(int i){
 
     default:
         std::cout<<"Error 3: Invalid move. No piece!!"<<std::endl;
-        break;
+        return 3;
     }
+    return 0;
 }
 
 bool equal_STATE(STATE_PTR p, STATE_PTR q){

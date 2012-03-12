@@ -4,7 +4,7 @@
 #include "types.h"
 #include "Game.h"
 
-void setPlayerMouseDown(int);
+int setPlayerMouseDown(int);
 char* getComputerState(); //State after computer plays, or kings player piece.
 char* getPlayerState(); //State before the above..
 void new_game();
@@ -60,6 +60,7 @@ bool CheckersGame::getNeighbour(Neighbour n, int row, int col, int& dest_r, int&
             }
             return false;
     }
+    return false;
 }
 
 CheckersGame::CheckersGame(){
@@ -85,11 +86,14 @@ void CheckersGame::display(){
     }
 }
 
-void CheckersGame::nextMove(int from, int to){
-    setPlayerMouseDown(from);
-    setPlayerMouseDown(to);
+int CheckersGame::nextMove(int from, int to){
+    if (!setPlayerMouseDown(from))
+        return 0;
+    if (!setPlayerMouseDown(to))
+        return 0;
     prevState = getPlayerState();
     curState = getComputerState();
+    return 1;
 }
 
 std::vector<PieceMove> CheckersGame::moves(){
@@ -122,7 +126,7 @@ std::vector<PieceMove> CheckersGame::moves(){
     //find the computer-coin that has changed
     int coin_initial_r=-1,coin_initial_c=-1;
     int coin_final_r=-1,coin_final_c=-1;
-    char coin_initial, coin_final;
+    char coin_initial;
     
     //find coin that disappeared..
     for (int i=0; i<64; i++){
@@ -139,7 +143,6 @@ std::vector<PieceMove> CheckersGame::moves(){
     //find coin that appeared..
     for (int i=0; i<64; i++){
         if (prevState[i] == '.' && (curState[i] == 'c' || curState[i] == 'C')){
-            coin_final = curState[i];
             coin_final_r = i/8;
             coin_final_c = i%8;
             break;
@@ -148,7 +151,7 @@ std::vector<PieceMove> CheckersGame::moves(){
     if (coin_final_r == -1 && coin_final_c == -1)
         return ret;
     
-    int dest_r, dest_c, mid_r, mid_c, temp_r, temp_c;
+    int temp_r, temp_c;
     while (coin_final_c != coin_initial_c && coin_final_r != coin_initial_r){
         //Non-Jump move?
         if (std::abs(coin_final_c - coin_initial_c) == 1 && 
