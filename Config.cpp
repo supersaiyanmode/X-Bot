@@ -1,6 +1,7 @@
 #include "Config.h"
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
 
 Config::Config(std::string s){
     std::ifstream in(s.c_str());
@@ -22,5 +23,3 @@ Config::Config(std::string s){
 const char* Config::operator[](const std::string& k){
     return content[k].c_str();
 }
-
-Config CONFIG("CONFIG");

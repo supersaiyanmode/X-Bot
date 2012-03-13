@@ -9,12 +9,19 @@
 #include "game/Game.h"
 #include "Config.h"
 
+Config CONFIG("CONFIG");
 CheckersBoard board(atoi(CONFIG["CAMERA_NUM"]));
 CheckersGame game;
+Server server(atoi(CONFIG["SERVER_PORT"]));
 
-void sigInterrupt(int sig){
-    std::cout<<"Signal: "<<sig<<std::endl;
+void exit(){
+    board.destroy();
+    game.destroy();
     exit(0);
+}
+void sigInterrupt(int sig){
+    std::cout<<"Caught Signal: "<<sig<<std::endl;
+    exit();
 }
 
 void displayState(std::string s){
@@ -35,9 +42,13 @@ std::string checkerStatus(){
 }
 
 int main(int argc, char **argv){
-    Server s(atoi(CONFIG["SERVER_PORT"]));
-    s.setCallback(checkerStatus);
-    s.start();
+    signal(SIGINT, sigInterrupt);
+    
+    server.setCallback(checkerStatus);
+    server.start();
+    
+    //hope the server starts up.. dont want mixed crap on stdout
+    Thread<CheckersBoard,int>::sleep(100); 
     
     std::string boardState;
     

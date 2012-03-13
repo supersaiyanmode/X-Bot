@@ -25,6 +25,8 @@ public:
     int nextMove(int, int);
     
     std::vector<PieceMove> moves();
+    
+    void destroy();
 };
 
 #endif

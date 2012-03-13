@@ -455,3 +455,7 @@ std::string CheckersBoard::analyse(cv::Mat img){
     (std::cout<<".").flush();
     return s;
 }
+
+void CheckersBoard::destroy(){
+    //check for cv::Mat memory leak.
+}

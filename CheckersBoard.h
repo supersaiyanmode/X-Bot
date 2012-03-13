@@ -43,6 +43,7 @@ public:
     std::string state();
     void drawCorners();
     bool getMove(std::string, int&, int&, int&, int&);
+    void destroy();
 };
 
 #endif

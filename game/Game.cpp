@@ -230,3 +230,7 @@ std::vector<PieceMove> CheckersGame::moves(){
     }
     return ret;        
 }
+
+void CheckersGame::destroy(){
+    
+}

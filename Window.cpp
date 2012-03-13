@@ -24,7 +24,7 @@ std::string Window::getNewWindowId(){
 }
 
 Window::~Window(){
-    windowIds.erase(std::find(windowIds.begin(),windowIds.end(),windowId));
+    //windowIds.erase(std::find(windowIds.begin(),windowIds.end(),windowId));
     cvDestroyWindow(windowId.c_str());
 }
 

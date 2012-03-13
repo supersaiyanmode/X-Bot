@@ -58,8 +58,10 @@ void Server::acceptProc(int){
 void Server::process(int socket){
     std::string line;
     while (1){
-        if (!::readLine(socket, line)) //glCheckers program has been closed..
+        if (!::readLine(socket, line)){ //glCheckers program has been closed..
+            ::closeSocket(socket);
             return;
+        }
         if (line == "GET" && callback)
             ::writeLine(socket,(*callback)());
     }
@@ -69,8 +71,6 @@ void Server::setCallback(std::string (*fn)()){
     callback = fn;
 }
 Server::~Server(){
-    //TODO: close client sockets
-    //::close_(serverSocket);
+    ::closeSocket(serverSocket);
     std::cout<<"Server shut down.\n";
 }
-
