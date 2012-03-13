@@ -13,6 +13,7 @@ Config CONFIG("CONFIG");
 CheckersBoard board(atoi(CONFIG["CAMERA_NUM"]));
 CheckersGame game;
 Server server(atoi(CONFIG["SERVER_PORT"]));
+Arm arm(atoi(CONFIG["ARM_LENGTH"]), atoi(CONFIG[);
 
 void exit(){
     board.destroy();

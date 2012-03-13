@@ -2,6 +2,7 @@
 #define ARM_H
 
 #include "Parallel.h"
+#include "Config.h"
 
 struct Point2D {
     double x,y;
