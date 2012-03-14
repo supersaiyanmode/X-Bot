@@ -18,12 +18,13 @@ public:
 
 class Arm {
     double armLength;
-    double theta1, theta2;
+    int steps1, steps2;
     Parallel p;
     Point2D basePoint,curPoint;
 public:
-    Arm(double, double, double);
+    Arm(double, int, int);
     void moveTo(double, double);
+    void destroy();
 };
 
 #endif

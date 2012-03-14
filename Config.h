@@ -9,8 +9,9 @@ class Config{
     std::map<std::string, std::string> content;
 public:
     Config(std::string);
+    void destroy();
     
-    const char* operator[](const std::string&);
+    std::string& operator[](const std::string&);
 };
 extern Config CONFIG;
 #endif

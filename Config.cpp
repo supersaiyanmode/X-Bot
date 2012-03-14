@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-Config::Config(std::string s){
+Config::Config(std::string s):file(s){
     std::ifstream in(s.c_str());
     if (!in.good()){
         std::cout<<"Unable to open config. file..\n";
@@ -25,8 +25,21 @@ Config::Config(std::string s){
         value = line.substr(start, end-start+1);
         content[key] = value;
     }
+    in.close();
 }
-    
-const char* Config::operator[](const std::string& k){
-    return content[k].c_str();
+void Config::destroy(){
+    std::ofstream out(file.c_str());
+    if (!out.good()){
+        std::cout<<"Unable to open config. file..\n";
+        exit(1);
+    }
+    for (std::map<std::string, std::string>::iterator it=content.begin();
+                    it!=content.end(); it++){
+        out<<it->first<<"\t\t\t"<<it->second<<std::endl;
+    }
+    out.close();
+}
+
+std::string& Config::operator[](const std::string& k){
+    return content[k];
 }

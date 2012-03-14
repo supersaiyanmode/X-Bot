@@ -6,18 +6,23 @@
 #include <signal.h>
 #include "CheckersBoard.h"
 #include "Server.h"
+#include "Arm.h"
 #include "game/Game.h"
 #include "Config.h"
 
 Config CONFIG("CONFIG");
-CheckersBoard board(atoi(CONFIG["CAMERA_NUM"]));
+CheckersBoard board(atoi(CONFIG["CAMERA_NUM"].c_str()));
 CheckersGame game;
-Server server(atoi(CONFIG["SERVER_PORT"]));
-Arm arm(atoi(CONFIG["ARM_LENGTH"]), atoi(CONFIG[);
+Server server(atoi(CONFIG["SERVER_PORT"].c_str()));
+Arm arm(atof(CONFIG["ARM_LENGTH"].c_str()), atoi(CONFIG["ARM1_STEP"].c_str()),
+                atoi(CONFIG["ARM2_STEP"].c_str()));
 
 void exit(){
+    //destroy explicitly (writes to CONFIG etc etc ..)
     board.destroy();
     game.destroy();
+    arm.destroy();
+    CONFIG.destroy();
     exit(0);
 }
 void sigInterrupt(int sig){
@@ -68,7 +73,7 @@ int main(int argc, char **argv){
     }
     //game.display();
     int r1,c1,r2,c2;
-    int sleepTime = atoi(CONFIG["USER_MOVE_POLL_SLEEP_TIME"]);
+    int sleepTime = atoi(CONFIG["USER_MOVE_POLL_SLEEP_TIME"].c_str());
     while (1){
         if (board.getMove(game.state(), r1,c1,r2,c2)){
             std::cout<<"Params: "<<r1<<" "<<c1<<" "<<r2<<" "<<c2<<std::endl;

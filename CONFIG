@@ -4,3 +4,9 @@ USER_MOVE_POLL_SLEEP_TIME       500
 CAMERA_NUM                      0
 BOARD_WIDTH                     200
 BOARD_HEIGHT                    200
+CAPTURE_OK_SLEEP_TIME           800
+CAPTURE_ERROR_SLEEP_TIME        800
+ARM_LENGTH                      19
+ARM1_STEP                       0
+ARM2_STEP                       0
+MOTOR_TOTAL_STEPS               4088

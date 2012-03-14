@@ -101,7 +101,9 @@ void CheckersBoard::drawCorners(){
 }
 
 std::string CheckersBoard::state(){
-    size_t RELIABLE_NUM = atoi(CONFIG["RELIABLE_DETECTION_COUNT"]);
+    size_t RELIABLE_NUM = atoi(CONFIG["RELIABLE_DETECTION_COUNT"].c_str());
+    int sleepTimeOk = atoi(CONFIG["CAPTURE_OK_SLEEP_TIME"].c_str());
+    int sleepTimeErr = atoi(CONFIG["CAPTURE_ERROR_SLEEP_TIME"].c_str());
     std::vector<std::string> states;
     while (1){
         std::string res;
@@ -110,7 +112,14 @@ std::string CheckersBoard::state(){
             img = camera.grab();
             res = analyse(img);
             window.showImage(img);
-            window.waitKey(res.length()==64? 800:800);
+            
+            int sleep=res.length()==64? sleepTimeOk:sleepTimeErr;
+            //window.waitKey(sleep);
+            while (sleep > 0){ //new busy-capture-wait
+                window.showImage(camera.grab());
+                window.waitKey(10);
+                sleep -= 10;
+            }
         }while (res.length() != 64);
         
         states.push_back(res);
