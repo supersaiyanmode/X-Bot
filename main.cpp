@@ -14,8 +14,7 @@ Config CONFIG("CONFIG");
 CheckersBoard board(atoi(CONFIG["CAMERA_NUM"].c_str()));
 CheckersGame game;
 Server server(atoi(CONFIG["SERVER_PORT"].c_str()));
-Arm arm(atof(CONFIG["ARM_LENGTH"].c_str()), atoi(CONFIG["ARM1_STEP"].c_str()),
-                atoi(CONFIG["ARM2_STEP"].c_str()));
+Arm arm;
 
 void exit(){
     //destroy explicitly (writes to CONFIG etc etc ..)

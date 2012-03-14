@@ -9,4 +9,6 @@ CAPTURE_ERROR_SLEEP_TIME        800
 ARM_LENGTH                      19
 ARM1_STEP                       0
 ARM2_STEP                       0
+ARM1_ANGLE                      0
+ARM2_ANGLE                      0
 MOTOR_TOTAL_STEPS               4088

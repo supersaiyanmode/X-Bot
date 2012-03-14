@@ -17,12 +17,12 @@ public:
 };
 
 class Arm {
-    double armLength;
+    double armLength,angle1, angle2;
     int steps1, steps2;
     Parallel p;
     Point2D basePoint,curPoint;
 public:
-    Arm(double, int, int);
+    Arm();
     void moveTo(double, double);
     void destroy();
 };
