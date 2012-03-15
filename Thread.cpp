@@ -26,7 +26,6 @@ void* Thread<T,P>::createThread(void *arg){
 
 template <typename T, typename P>
 void Thread<T,P>::start(){
-    std::cout<<"Before!"<<std::endl;
     Thread<T,P>* obj = new Thread<T,P>(*this);
 #if WIN32
     thread = CreateThread(0, 0, createThread, (void*)obj, 0, 0);

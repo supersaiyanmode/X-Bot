@@ -1,7 +1,7 @@
 CPPCOMPILER=g++
 FLAGS=-p -g -Wall
 LIBS=`pkg-config --libs opencv`
-UNITS=obj/Camera.o obj/CheckersBoard.o obj/main.o obj/Window.o \
+UNITS=obj/Camera.o obj/CheckersBoard.o obj/CheckersLine.o obj/Cell.o obj/main.o obj/Window.o \
 	obj/Config.o obj/Server.o obj/SocketUtils.o\
 	obj/Arm.o obj/Parallel.o obj/game/Game.o obj/game/Checkers.o obj/game/play.o\
 	obj/game/tables.o

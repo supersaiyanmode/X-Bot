@@ -6,32 +6,8 @@
 #include "opencv/cv.h"
 #include "Window.h"
 #include "Camera.h"
-
-class ChessLine{
-    bool horiz;
-    double slope_,slopeI_;
-    int intercept_;
-    cv::Point p1,p2;
-public:
-    ChessLine(const cv::Point&, const cv::Point&);
-    bool horizontal() const;
-    bool vertical() const;
-    double slope() const;
-    double slopeI() const;
-    int intercept() const;
-    cv::Point getPoint(int);
-};
-
-struct Cell{
-    int row, column;
-    enum CellType{BLACK=' ', WHITE='.', RED='c', GREEN='p', BLUE='B'} type;
-    
-    cv::Mat image;
-    std::vector<cv::Point> corners,subCorners;
-    
-    Cell();
-    int area();
-};
+#include "CheckersLine.h"
+#include "Cell.h"
 
 class CheckersBoard{
     static int totalDetected, total;

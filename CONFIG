@@ -12,3 +12,7 @@ ARM2_STEP                       0
 ARM1_ANGLE                      0
 ARM2_ANGLE                      0
 MOTOR_TOTAL_STEPS               4088
+
+#CAMERA_RES                      32 by 43 @ 66 cm..
+FOV_Y                           13.626994859891541
+FOV_X                           18.043412005331277                           

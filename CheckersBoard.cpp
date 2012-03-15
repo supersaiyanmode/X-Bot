@@ -9,80 +9,6 @@
 #include "Config.h"
 
 #define DEBUG 0
-//###########CHESSLINE################
-
-ChessLine::ChessLine(const cv::Point& p, const cv::Point& q):p1(p), p2(q){
-    slope_ = (p.y-q.y)/(double)(p.x-q.x);
-    slopeI_ = (double)(p.x-q.x)/(double)(p.y-q.y);
-    horiz = slope_ < 1 && slope_ > -1;
-    intercept_ = horiz? (p1.y - slope_*p1.x) : (p1.x - p1.y/slope_);
-}
-bool ChessLine::horizontal() const{
-    return horiz;
-}
-bool ChessLine::vertical() const{
-    return !horiz;
-}
-
-cv::Point ChessLine::getPoint(int first){
-    return first? p1 : p2;
-}
-
-double ChessLine::slope() const{
-    return slope_;
-}
-double ChessLine::slopeI() const{
-    return slopeI_;
-}
-int ChessLine::intercept() const{
-    return intercept_;
-}
-
-bool operator<(const ChessLine& left, const ChessLine& right){
-    return left.intercept()<right.intercept();
-}
-
-cv::Point operator^(const ChessLine& left, const ChessLine& right){
-    //this crap assumes one line is horizontal and another is vertical
-    if ((!!left.horizontal()) ^ (!!right.horizontal())){
-        //y = <slopeHoriz> * x + interceptHoriz
-        ChessLine horizLine(left.horizontal()? left:right);
-        
-        //x = y*slopeVert_I + interceptVert
-        ChessLine vertLine(right.horizontal()? left:right);
-        
-        //y = <slopeHoriz> * (y * <slopeVert_I> + interceptVert) + interceptHoriz
-        //y(1 - slopeHoriz * slopeVert_I) = slopeHoriz*interceptVert + interceptHoriz
-        //y = (slopeHoriz*interceptVert + interceptHoriz)/(1 - slopeHoriz*slopeVert_I)
-        int y = horizLine.slope() * vertLine.intercept() + horizLine.intercept();
-        y /= (1 - horizLine.slope() * vertLine.slopeI());
-        
-        //x =  y * slopeVert_I + interceptVert
-        int x = y * vertLine.slopeI() + vertLine.intercept();
-        return cv::Point(x,y);
-    }else{
-        std::cout<<"WHAT?!?!?!?! Intersect (probably) parallel lines?"<<std::endl;
-        return cv::Point();
-    }
-}
-
-//############CELL###############
-Cell::Cell(){
-    corners.resize(4);
-    subCorners.resize(4);
-}
-
-int Cell::area(){
-    //use that crappy two triangle area method ..
-    //MUST: pass in strict clockwise or anti ..
-    //nahi toh you will get non-convex poly, formula fails..
-    int ret = 0;
-    ret += corners[0].x*corners[1].y - corners[1].x*corners[0].y;
-    ret += corners[1].x*corners[2].y - corners[2].x*corners[1].y;
-    ret += corners[2].x*corners[3].y - corners[3].x*corners[2].y;
-    ret += corners[3].x*corners[0].y - corners[0].x*corners[3].y;
-    return ret/2;
-}
 //############CHESSBOARD###############
 #define ERR_BAD_DETECTION "BAD DETECTION"
 
@@ -216,10 +142,10 @@ std::string CheckersBoard::analyse(cv::Mat img){
         cv::line(img, p1, p2, cv::Scalar(255,0,255),2,8);
     }
     
-    std::vector<ChessLine> horizLines, vertLines, horizLinesPruned, vertLinesPruned;
+    std::vector<CheckersLine> horizLines, vertLines, horizLinesPruned, vertLinesPruned;
     for (int i=0, len=lines.size(); i<len; i++){
         cv::Point p1(lines[i][0],lines[i][1]),p2(lines[i][2],lines[i][3]);
-        ChessLine cline(p1,p2);
+        CheckersLine cline(p1,p2);
         (cline.horizontal()?horizLines:vertLines).push_back(cline);
     }
     
@@ -262,7 +188,7 @@ std::string CheckersBoard::analyse(cv::Mat img){
         avgSlope = (double)totalSlope/double(total);
         
         
-        ChessLine newCBLine(cv::Point(0,avgIntercept),
+        CheckersLine newCBLine(cv::Point(0,avgIntercept),
                             cv::Point(img.size().width, avgSlope*img.size().width + avgIntercept));
         horizLinesPruned.push_back(newCBLine);
     }
@@ -308,7 +234,7 @@ std::string CheckersBoard::analyse(cv::Mat img){
         avgIntercept = (double)totalIntercepts/double(total);
         avgSlopeI = (double)totalSlope/double(total);
         
-        ChessLine newCBLine(cv::Point(avgIntercept,0),
+        CheckersLine newCBLine(cv::Point(avgIntercept,0),
                             cv::Point(avgSlopeI*img.size().height + avgIntercept,img.size().height));
         vertLinesPruned.push_back(newCBLine);
     }
