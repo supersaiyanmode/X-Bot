@@ -21,7 +21,6 @@ std::ostream& operator<<(std::ostream& o, const std::vector<PieceMove>& moves){
     return o;
 }
 
-
 void CheckersGame::stateStringToArray(const std::string& s, char **arr){
     int cur=0;
     for (int i=0; i<8; i++)
@@ -87,12 +86,13 @@ void CheckersGame::display(){
 }
 
 int CheckersGame::nextMove(int from, int to){
-    if (!setPlayerMouseDown(from))
+    if (setPlayerMouseDown(from))
         return 0;
-    if (!setPlayerMouseDown(to))
+    if (setPlayerMouseDown(to))
         return 0;
     prevState = getPlayerState();
     curState = getComputerState();
+    
     return 1;
 }
 

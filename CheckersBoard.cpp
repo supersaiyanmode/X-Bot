@@ -63,7 +63,7 @@ std::string CheckersBoard::state(){
     return "";
 }
 
-bool CheckersBoard::getMove(std::string curState, int& r1, int& c1, int& r2, int& c2){
+bool CheckersBoard::getMove(std::string curState, MoveData& move){
     std::cout<<"Checking for player move...";
     std::string newState = state();
     if (newState.length() != 64){
@@ -72,17 +72,18 @@ bool CheckersBoard::getMove(std::string curState, int& r1, int& c1, int& r2, int
     }
     
     size_t pos=-1;
-    r1 = -1;
+    move.r1 = -1;
     //polls changes for pP coins ..
     while ((pos=curState.find_first_of("pP",pos+1))!=std::string::npos){
         if (curState[pos] != newState[pos]){
             std::cout<<"Found inequality at: "<<pos<<std::endl;
-            r1 = pos/8;
-            c1 = pos%8;
+            move.r1 = pos/8;
+            move.c1 = pos%8;
+            move.pos1 = cells[move.r1][move.c1].centroid();
             break;
         }
     }
-    if (r1 == -1){
+    if (move.r1 == -1){
         std::cout<<"No change!\n";
         return false;
     }
@@ -90,12 +91,13 @@ bool CheckersBoard::getMove(std::string curState, int& r1, int& c1, int& r2, int
     while ((pos=curState.find_first_of(".",pos+1))!=std::string::npos){
         if (curState[pos] != newState[pos]){
             std::cout<<"Found inequality at: "<<pos<<std::endl;
-            r2 = pos/8;
-            c2 = pos%8;
+            move.r2 = pos/8;
+            move.c2 = pos%8;
+            move.pos2 = cells[move.r1][move.c1].centroid();
             break;
         }
     }
-    if (r2 == -1){
+    if (move.r2 == -1){
         std::cout<<"Cant find piece that appeared.\n";
         return false;
     }
@@ -132,7 +134,7 @@ std::string CheckersBoard::analyse(cv::Mat img){
                     0.5, //linear accuracy of the accumulator
                     CV_PI/180.0, //radial accuracy
                     20,  //max parallel distance of lines to be considered as one..
-                    300, //min length of the line -- condition
+                    200, //min length of the line -- condition
                     30 //max breakage in the line .. along the line ..
                 );
     
@@ -258,8 +260,7 @@ std::string CheckersBoard::analyse(cv::Mat img){
     }
     
     //Now awesome cr@p begins ..
-    std::vector<std::vector<Cell> > cells(8, std::vector<Cell>(8,Cell()));
-    
+    cells = std::vector<std::vector<Cell> >(8, std::vector<Cell>(8,Cell()));
     //the 9*9 corners..
     cv::Point corners[9][9];
     for (int i=0, lenH=horizLinesPruned.size(); i<lenH; i++){
@@ -273,6 +274,9 @@ std::string CheckersBoard::analyse(cv::Mat img){
                 cells[i-1][j-1].corners[1] = corners[i-1][j];
                 cells[i-1][j-1].corners[2] = corners[i][j];
                 cells[i-1][j-1].corners[3] = corners[i][j-1];
+                
+                cells[i-1][j-1].row = i-1;
+                cells[i-1][j-1].column = j-1;
                 
                 int left = std::min(corners[i-1][j-1].x,corners[i][j-1].x),
                     right = std::max(corners[i-1][j].x,corners[i][j].x),
@@ -377,7 +381,8 @@ std::string CheckersBoard::analyse(cv::Mat img){
     }
     totalDetected++;
     //current hack .. one green coin less that we have..
-    cells[7][6].type = Cell::GREEN;
+    //cells[7][6].type = Cell::GREEN;
+    
     std::string s;
     for (int i=0; i<8; i++){
         for (int j=0; j<8; j++){

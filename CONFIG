@@ -1,18 +1,17 @@
-RELIABLE_DETECTION_COUNT        3
-SERVER_PORT                     44312
-USER_MOVE_POLL_SLEEP_TIME       500
-CAMERA_NUM                      0
-BOARD_WIDTH                     200
-BOARD_HEIGHT                    200
-CAPTURE_OK_SLEEP_TIME           800
-CAPTURE_ERROR_SLEEP_TIME        800
-ARM_LENGTH                      19
-ARM1_STEP                       0
-ARM2_STEP                       0
-ARM1_ANGLE                      0
-ARM2_ANGLE                      0
-MOTOR_TOTAL_STEPS               4088
-
-#CAMERA_RES                      32 by 43 @ 66 cm..
-FOV_Y                           13.626994859891541
-FOV_X                           18.043412005331277                           
+ARM1_ANGLE			0
+ARM1_STEP			0
+ARM2_ANGLE			0
+ARM2_STEP			0
+ARM_LENGTH			19
+BOARD_HEIGHT			200
+BOARD_WIDTH			200
+CAMERA_NUM			1
+CAMERA_RES			32by43@66cm..
+CAPTURE_ERROR_SLEEP_TIME			800
+CAPTURE_OK_SLEEP_TIME			800
+FOV_X			18.043412005331277
+FOV_Y			13.626994859891541
+MOTOR_TOTAL_STEPS			4088
+RELIABLE_DETECTION_COUNT			3
+SERVER_PORT			44312
+USER_MOVE_POLL_SLEEP_TIME			500
