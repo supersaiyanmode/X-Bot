@@ -132,23 +132,37 @@ std::string CheckersBoard::analyse(cv::Mat img){
                     lines, //out - vector of vec4i ..
                     0.5, //linear accuracy of the accumulator
                     CV_PI/180.0, //radial accuracy
-                    20,  //max parallel distance of lines to be considered as one..
-                    200, //min length of the line -- condition
-                    30 //max breakage in the line .. along the line ..
+                    20,  //threshold
+                    200, //min line gap
+                    30 //max breakage in the line .. along the line .. to join them
                 );
-    
-    for (int i=0, len=lines.size();i<len; i++){
-        //draw the effing line!
-        cv::Point p1(lines[i][0],lines[i][1]),p2(lines[i][2],lines[i][3]);
-        cv::line(img, p1, p2, cv::Scalar(255,0,255),2,8);
-    }
     
     std::vector<CheckersLine> horizLines, vertLines, horizLinesPruned, vertLinesPruned;
     for (int i=0, len=lines.size(); i<len; i++){
         cv::Point p1(lines[i][0],lines[i][1]),p2(lines[i][2],lines[i][3]);
         CheckersLine cline(p1,p2);
-        (cline.horizontal()?horizLines:vertLines).push_back(cline);
+        //(cline.horizontal()?horizLines:vertLines).push_back(cline);
+        
+        //A cleaner fail proof method. Avoids random noisy lines..
+        if (cline.slope() > -0.5 && cline.slope()<0.5)
+            horizLines.push_back(cline);
+        else if (cline.slopeI() > -0.5 && cline.slopeI() < 0.5)
+            vertLines.push_back(cline);
+        //else
+            //std::cout<<"Too much noise .. :-| "<<std::endl;
     }
+    
+    for (int i=0, len=horizLines.size();i<len; i++){
+        //draw the effing line!
+        cv::Point p1(horizLines[i].getPoint(0)),p2(horizLines[i].getPoint(1));
+        cv::line(img, p1, p2, cv::Scalar(255,0,255),2,8);
+    }
+    for (int i=0, len=vertLines.size();i<len; i++){
+        //draw the effing line!
+        cv::Point p1(vertLines[i].getPoint(0)),p2(vertLines[i].getPoint(1));
+        cv::line(img, p1, p2, cv::Scalar(255,0,255),2,8);
+    }
+    
     
     std::sort(horizLines.begin(), horizLines.end());
     std::sort(vertLines.begin(), vertLines.end());
