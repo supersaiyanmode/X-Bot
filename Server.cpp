@@ -18,6 +18,7 @@ void error(const char *msg){
 }
 
 Server::Server(int p,bool forceUse):port(p),callback(0){
+    //Create a socket
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in serv_addr;
     if (serverSocket < 0) 
@@ -28,14 +29,18 @@ Server::Server(int p,bool forceUse):port(p),callback(0){
     serv_addr.sin_port = htons(port);
     
     int optval = forceUse?1:0;
+    
+    //Allow re-use of socket. 
     setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof optval);
     
+    //Bind it!
     if (bind(serverSocket, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
         error("ERROR on binding");
     listen(serverSocket,10);
 }
 
 void Server::start(){
+    //staer the accept thread.
     Thread<Server,int>(*this, &Server::acceptProc,0).start();
 }
 
@@ -50,11 +55,13 @@ void Server::acceptProc(int){
         if (clientSocket < 0){
             error("ERROR on accept");
         }else{
+            //We got a connection. Start a thread for it.
             Thread<Server,int>(*this, &Server::process,clientSocket).start();
         }
     }
 }
 
+//Process. Thread lives till socket is open.
 void Server::process(int socket){
     std::string line;
     while (1){
@@ -67,9 +74,11 @@ void Server::process(int socket){
     }
 }
 
+//Callback
 void Server::setCallback(std::string (*fn)()){
     callback = fn;
 }
+
 Server::~Server(){
     ::closeSocket(serverSocket);
     std::cout<<"Server shut down.\n";

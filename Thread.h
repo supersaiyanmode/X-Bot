@@ -2,6 +2,14 @@
 #define THREAD_H
 #include <pthread.h>
 
+
+/*
+ * A templated Thread Class.
+ * 
+ * A best effort to keep it cross platform..
+ * 
+ */
+
 template <typename T, typename P>
 class Thread{
 public:

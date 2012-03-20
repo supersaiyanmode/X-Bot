@@ -55,7 +55,7 @@ void tempMove(int r1, int c1, int r2, int c2, std::vector<std::vector<Cell> >& c
     
     std::string ret;
     std::cout<<"Translate: ("<<r1<<","<<c1<<") -> "<<translate(r1,c1)<<std::endl;
-    std::getchar();
+    //std::getchar();
     ::writeLine(clientSocket,translate(r1,c1));
     if (!::readLine(clientSocket,ret)){
         std::cout<<"Socket error!"<<std::endl;
@@ -174,6 +174,7 @@ int main(int argc, char **argv){
         std::getchar();
         boardState = board.state();
     }
+    
     //game.display();
     int sleepTime = atoi(CONFIG["USER_MOVE_POLL_SLEEP_TIME"].c_str());
     while (1){
@@ -196,6 +197,8 @@ int main(int argc, char **argv){
             }*/
             
             std::vector<PieceMove> moves(game.moves());
+            
+            //TODO: Clean this section up. getCells() is bad. Centroid is provided in moveData
             std::vector<std::vector<Cell> > cells(board.getCells());
             for (std::vector<PieceMove>::iterator it=moves.begin(); it!=moves.end(); it++){
                 std::cout<<it->description<<std::endl;

@@ -6,6 +6,9 @@
 #include "opencv/highgui.h"
 #include <queue>
 
+/*
+ * Class Camera: A tiny wrapper over cv::VideoCapture
+ */
 namespace xbot{
     class Camera{
         cv::VideoCapture capture;

@@ -6,6 +6,11 @@
 #include <string>
 #include <vector>
 
+/*
+ * class Window:
+ *      A simple wrapper over OpenCV/Highui's cv::namedWindow.
+ *      It generates random string for window id, for each instance.
+ */
 
 namespace xbot{
     class Window{

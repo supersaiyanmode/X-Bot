@@ -6,6 +6,12 @@
 #include <string>
 #include "Thread.cpp"
 
+
+/*
+ * A Simple Server
+ * A Callback called for each line read. Bad for time sensitive stuffs.
+ */
+
 class Server{
 public:
     Server(int,bool=true);

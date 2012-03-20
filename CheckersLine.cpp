@@ -1,6 +1,7 @@
 #include <iostream>
 #include "CheckersLine.h"
 
+//Construct using the two points, calculate the slope, and the inverse.
 CheckersLine::CheckersLine(const cv::Point& p, const cv::Point& q):p1(p), p2(q){
     slope_ = (p.y-q.y)/(double)(p.x-q.x);
     slopeI_ = (double)(p.x-q.x)/(double)(p.y-q.y);
@@ -14,6 +15,7 @@ bool CheckersLine::vertical() const{
     return !horiz;
 }
 
+//Return the point that made up this line
 cv::Point CheckersLine::getPoint(int first){
     return first? p1 : p2;
 }
@@ -21,6 +23,9 @@ cv::Point CheckersLine::getPoint(int first){
 double CheckersLine::slope() const{
     return slope_;
 }
+
+//Inverse slope == slopeI, to make calculations stay within computation domain.
+//and not touch inifinty for vertical lines.
 double CheckersLine::slopeI() const{
     return slopeI_;
 }
@@ -28,10 +33,12 @@ int CheckersLine::intercept() const{
     return intercept_;
 }
 
+//Overloaded < for sorting the lines.
 bool operator<(const CheckersLine& left, const CheckersLine& right){
     return left.intercept()<right.intercept();
 }
 
+//Returns the intersection of the lines. Constraint: One is horiz other is vert.
 cv::Point operator^(const CheckersLine& left, const CheckersLine& right){
     //this crap assumes one line is horizontal and another is vertical
     if ((!!left.horizontal()) ^ (!!right.horizontal())){

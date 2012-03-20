@@ -14,6 +14,8 @@ void Window::showImage(const cv::Mat& m){
     cv::imshow(windowId, m);
 }
 
+//Generate random ID, and stores it for no further repetition
+
 std::string Window::getNewWindowId(){
     std::string res;
     do {

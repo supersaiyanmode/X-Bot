@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 
+//Construct the object by reading the file, and building the map.
 Config::Config(std::string s):file(s){
     std::ifstream in(s.c_str());
     if (!in.good()){
@@ -40,6 +41,7 @@ void Config::destroy(){
     out.close();
 }
 
+//For more readability
 std::string& Config::operator[](const std::string& k){
     return content[k];
 }

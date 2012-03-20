@@ -19,6 +19,13 @@
     #include <arpa/inet.h>
 #endif 
 
+/*
+ * SOCKET UTILS
+ * Made by best effort to keep it cross platform, providing a higher layer.
+ * Didnt much test under windows.
+ * 
+ */
+
 bool readLine(int socket, std::string &ret);
 
 bool readBytes(int socket, char *buf, int len);

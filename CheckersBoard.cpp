@@ -14,17 +14,18 @@
 
 int CheckersBoard::total=0;
 int CheckersBoard::totalDetected=0;
+
 CheckersBoard::CheckersBoard(int cam):camera(cam){
     
 }
 
-void CheckersBoard::drawCorners(){
-    /*std::vector<cv::Point2f> corners;
-    cv::findChessboardCorners(img,cv::Size(7,7), corners);
-    for (int i=0; i<corners.size(); i++){
-        cv::circle(img, cv::Point(corners[i].x,corners[i].y),4, cv::Scalar(0,255,0),-1);
-    }*/
-}
+/*
+ * Returns the state as a string **STABLE/RELIABLE**
+ * 
+ * NOTE: Modify this function to have a separate thread for detection.
+ * And may be a query for the states can check to see if last NUM captures
+ * are same and return it, else wait till they are same.
+ */
 
 std::string CheckersBoard::state(){
     size_t RELIABLE_NUM = atoi(CONFIG["RELIABLE_DETECTION_COUNT"].c_str());
@@ -40,18 +41,20 @@ std::string CheckersBoard::state(){
             window.showImage(img);
             
             int sleep=res.length()==64? sleepTimeOk:sleepTimeErr;
-            window.waitKey(sleep);
-            /*while (sleep > 0){ //new busy-capture-wait
-                window.showImage(camera.grab());
+            //window.waitKey(sleep);
+            while (sleep > 0){ //new busy-capture-wait
+                //window.showImage(camera.grab());
                 window.waitKey(10);
                 sleep -= 10;
-            }*/
+            }
         }while (res.length() != 64);
         
+        //add to the bag
         states.push_back(res);
         if (states.size() > (unsigned)RELIABLE_NUM)
             states.erase(states.begin());
         
+        //check for the similarity
         bool same = true;
         for (size_t i=0; i<states.size() -1 && same; i++){
             if (states[i] != states[i+1]) 
@@ -63,6 +66,12 @@ std::string CheckersBoard::state(){
     return "";
 }
 
+/*
+ * bool getMove(curState, [out] move)
+ * Figures out what the user has moved by comparing 
+ *      curState        and     this->state()
+ */
+
 bool CheckersBoard::getMove(std::string curState, MoveData& move){
     std::cout<<"Checking for player move...";
     std::string newState = state();
@@ -73,6 +82,7 @@ bool CheckersBoard::getMove(std::string curState, MoveData& move){
     
     size_t pos=-1;
     move.r1 = -1;
+    
     //polls changes for pP coins ..
     while ((pos=curState.find_first_of("pP",pos+1))!=std::string::npos){
         if (curState[pos] != newState[pos]){
@@ -105,6 +115,34 @@ bool CheckersBoard::getMove(std::string curState, MoveData& move){
     return true;
 }
 
+
+/*
+ * Heart of image processing...
+ * Takes an image, processes the lines, and returns the stringised form
+ * 
+ * Steps:
+ *      1. Convert to Gray
+ *      2. Apply Canny
+ *      3. HoughLines Transform
+ *      4. Ignore noisy lines on the slope criteria
+ *      5. Group similiar lines separately as horizontal and vertical lines
+ *      6. Average out the lines in the group
+ *      7. Check if there are 9 horiz and 9 vert lines
+ *      8. Make out 81 corners
+ *      9. Using that make out 64 cells.
+ *      10. For each cell:
+ *              i.      Apply hough circle transform
+ *              ii.     If circle exists:
+ *                      - Draw with intensity '1' a circle with the radius and center found
+ *                      - Take dot product and divide by pi*r*r to get avg. intensity
+ *                      - Compare this intensity
+ *              ii.     Else:
+ *                      - Draw a polygon of the corners of the cell.
+ *                      - Dot it with original image and divide by area
+ *                      - Compare for black/white cell
+ *      11. Make the string
+ * 
+ */
 std::string CheckersBoard::analyse(cv::Mat img){
     //static xbot::Window w;
     cv::Mat mainImage = img.clone();
