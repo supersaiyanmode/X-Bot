@@ -40,12 +40,12 @@ std::string CheckersBoard::state(){
             window.showImage(img);
             
             int sleep=res.length()==64? sleepTimeOk:sleepTimeErr;
-            //window.waitKey(sleep);
-            while (sleep > 0){ //new busy-capture-wait
+            window.waitKey(sleep);
+            /*while (sleep > 0){ //new busy-capture-wait
                 window.showImage(camera.grab());
                 window.waitKey(10);
                 sleep -= 10;
-            }
+            }*/
         }while (res.length() != 64);
         
         states.push_back(res);
@@ -106,6 +106,7 @@ bool CheckersBoard::getMove(std::string curState, MoveData& move){
 }
 
 std::string CheckersBoard::analyse(cv::Mat img){
+    //static xbot::Window w;
     cv::Mat mainImage = img.clone();
     
     cv::Mat bwImg(img.size(),8);
@@ -118,14 +119,12 @@ std::string CheckersBoard::analyse(cv::Mat img){
     //cv::dilate(m,m,cv::Mat());
     
     cv::Canny(m,m,50,200);
+    
     //cv::GaussianBlur(m,m,cv::Size(5,5),2);
     //cv::threshold(m,m,50,255,cv::THRESH_BINARY);
     
     cv::dilate(m,m,cv::Mat());
     
-    static xbot::Window w;
-    w.showImage(m);
-    w.waitKey(1);
     //img = m;
     //return 0;
     std::vector<cv::Vec4i> lines;
@@ -258,6 +257,7 @@ std::string CheckersBoard::analyse(cv::Mat img){
 #endif
         return ERR_BAD_DETECTION;
     }
+
     
     //Now awesome cr@p begins ..
     cells = std::vector<std::vector<Cell> >(8, std::vector<Cell>(8,Cell()));
@@ -335,7 +335,7 @@ std::string CheckersBoard::analyse(cv::Mat img){
             if (circles.size()){ //circles exist
                 if (circles.size() != 1){
                     std::cout<<"More than 1 circles found at cell: "
-                        <<i<<","<<j<<std::endl; 
+                        <<i<<","<<j<<std::endl;
                     return ERR_BAD_DETECTION;
                 }
                 //draw all circles..
@@ -369,6 +369,7 @@ std::string CheckersBoard::analyse(cv::Mat img){
                 
                 cells[i][j].type = resultRed > resultGreen? Cell::RED : Cell::GREEN;
             }else{
+                
                 //(black n white)
                 const int BW_THRESH = 100;
                 cv::Mat mask = cv::Mat::zeros(bwCircleImg.size(), CV_8UC1);
@@ -394,6 +395,10 @@ std::string CheckersBoard::analyse(cv::Mat img){
     //std::cout<<s<<std::endl;
     (std::cout<<".").flush();
     return s;
+}
+
+std::vector<std::vector<Cell> > CheckersBoard::getCells(){
+    return cells;
 }
 
 void CheckersBoard::destroy(){

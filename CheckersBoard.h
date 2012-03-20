@@ -26,8 +26,8 @@ public:
     std::string state();
     void drawCorners();
     bool getMove(std::string, MoveData&);
+    std::vector<std::vector<Cell> > getCells();
     void destroy();
 };
 
 #endif
-
