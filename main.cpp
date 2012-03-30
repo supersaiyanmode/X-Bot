@@ -54,70 +54,61 @@ void tempMove(int r1, int c1, int r2, int c2, std::vector<std::vector<Cell> >& c
     }
     
     std::string ret;
-    std::cout<<"Translate: ("<<r1<<","<<c1<<") -> "<<translate(r1,c1)<<std::endl;
+    //std::cout<<"Translate: ("<<r1<<","<<c1<<") -> "<<translate(r1,c1)<<std::endl;
     //std::getchar();
     ::writeLine(clientSocket,translate(r1,c1));
     if (!::readLine(clientSocket,ret)){
         std::cout<<"Socket error!"<<std::endl;
         return;
     }
-    std::cout<<ret<<std::endl;
     
     ::writeLine(clientSocket,"DOWN");
     if (!::readLine(clientSocket,ret)){
         std::cout<<"Socket error!"<<std::endl;
         return;
     }
-    std::cout<<ret<<std::endl;
     
     ::writeLine(clientSocket,"MAGNETON");
     if (!::readLine(clientSocket,ret)){
         std::cout<<"Socket error!"<<std::endl;
         return;
     }
-    std::cout<<ret<<std::endl;
     
     ::writeLine(clientSocket,"UP");
     if (!::readLine(clientSocket,ret)){
         std::cout<<"Socket error!"<<std::endl;
         return;
     }
-    std::cout<<ret<<std::endl;
     
     ::writeLine(clientSocket,translate(r2,c2));
     if (!::readLine(clientSocket,ret)){
         std::cout<<"Socket error!"<<std::endl;
         return;
     }
-    std::cout<<ret<<std::endl;
     
     ::writeLine(clientSocket,"DOWN");
     if (!::readLine(clientSocket,ret)){
         std::cout<<"Socket error!"<<std::endl;
         return;
     }
-    std::cout<<ret<<std::endl;
     
     ::writeLine(clientSocket, "MAGNETOFF");
     if (!::readLine(clientSocket,ret)){
         std::cout<<"Socket error!"<<std::endl;
         return;
     }
-    std::cout<<ret<<std::endl;
     
     ::writeLine(clientSocket, "UP");
     if (!::readLine(clientSocket,ret)){
         std::cout<<"Socket error!"<<std::endl;
         return;
     }
-    std::cout<<ret<<std::endl;
-
+    
     ::writeLine(clientSocket, "0 380");
     if (!::readLine(clientSocket,ret)){
         std::cout<<"Socket error!"<<std::endl;
         return;
     }
-    std::cout<<ret<<std::endl;
 }
 
 void exit(){
@@ -180,14 +171,16 @@ int main(int argc, char **argv){
     while (1){
         MoveData move;
         if (board.getMove(game.state(), move)){
+            std::vector<std::vector<Cell> > cells(board.getCells());
             std::cout<<"Params: "<<move.r1<<" "<<move.c1<<" "<<move.r2<<" "<<move.c2<<std::endl;
             //5 2 4 3
             move.r1 = 7-move.r1;
             move.r2 = 7-move.r2;
             int from = 4*move.r1 + move.c1/2, to = 4*move.r2 + move.c2/2;
-            std::cout<<"Making move: "<<from<<" -> "<<to<<std::endl;
+            //std::cout<<"Making move: "<<from<<" -> "<<to<<std::endl;
             if (!game.nextMove(from,to)){
                 std::cout<<"Error move!!!\n";
+                tempMove(move.r2,move.c2, move.r1, move.c1,cells);
             }
             std::cout<<"State after my move..\n";
             game.display();
@@ -199,11 +192,14 @@ int main(int argc, char **argv){
             std::vector<PieceMove> moves(game.moves());
             
             //TODO: Clean this section up. getCells() is bad. Centroid is provided in moveData
-            std::vector<std::vector<Cell> > cells(board.getCells());
             for (std::vector<PieceMove>::iterator it=moves.begin(); it!=moves.end(); it++){
                 std::cout<<it->description<<std::endl;
                 tempMove(it->r1, it->c1, it->r2, it->c2,cells);
             }
+        }
+        //check if arm move is successful!
+        if (game.state() != board.state()){
+            std::cout<<"Grr.. looks like the arm didnt make the move. Can you make the move? :-(\n";
         }
         Thread<CheckersBoard,int>::sleep(sleepTime);
     }

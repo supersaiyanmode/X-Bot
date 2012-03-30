@@ -178,7 +178,7 @@ std::vector<PieceMove> CheckersGame::moves(){
                         && prevState[temp_r*8 + temp_c] != curState[temp_r*8 + temp_c]){
                     mid_r = temp_r;
                     mid_c = temp_c;
-                    if (getNeighbour(NORTH_WEST, temp_r,temp_c, temp_r, temp_c)){
+                    if (getNeighbour(array[i], temp_r,temp_c, temp_r, temp_c)){
                         jump_c = temp_c;
                         jump_r = temp_r;
                         found = true;
