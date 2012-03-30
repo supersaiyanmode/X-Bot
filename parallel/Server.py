@@ -3,11 +3,10 @@ from parallel import *
 import time
 import math
 import thread
- 
+
 toRad = lambda x: x*math.pi/180.0
 toDeg = lambda x: x*180.0/math.pi
 def toSteps(x):
-    print type(x)
     return int(x*2044/math.pi)
  
 STEPS =[1,3,2,6,4,12,8,9]
@@ -49,7 +48,7 @@ class Connection:
                 self.sock.send("DONE\n")
             except Exception,e:
                 self.sock.send("ERROR!\n" + str(e))
- 
+
 class Server:
     def __init__(self,r):
         self.s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -102,7 +101,7 @@ class Robot:
         print "DeltaAngles:",toDeg(toAngle1),toDeg(toAngle2)
         toStep1,toStep2 = toSteps(toAngle1), toSteps(toAngle2)
         print "Steps:",toStep1, toStep2
-        raw_input();
+        #raw_input();
         return toStep1,toStep2
     
     def moveXY(self, x,y):
@@ -113,26 +112,34 @@ class Robot:
     
     def parallelMoveXY(self,x,y):
         toStep1,toStep2 = self.getMoveSteps(x,y)
+        remStep1,remStep2 = toStep1, toStep2
+        print "ToSteps:",toStep1, toStep2
         step1 = 1 if toStep1>0 else 7
-        step2 = 1 if toStep2>0 else 7
+        step2 = 7 if toStep2>0 else 1 #motor 2 opposite direction
+        #print "steps:",step1, step2
         reduceStep1 = 1 if toStep1>0 else -1
         reduceStep2 = 1 if toStep2>0 else -1
+        #print "reduceSteps",reduceStep1,reduceStep2
         
         for i in xrange(min(abs(toStep1),abs(toStep2))):
             self.curStep1 = (self.curStep1+step1)%8
             self.curStep2 = (self.curStep2+step2)%8
-            step1 -= reduceStep1
-            step2 -= reduceStep2
+            remStep1 -= reduceStep1
+            remStep2 -= reduceStep2
+            #print "#1:",self.curStep1,STEPS[self.curStep1]
+            #print "#2:",self.curStep2,STEPS[self.curStep2]
             self.p.setData(STEPS[self.curStep1] | (STEPS[self.curStep2]<<4))
-            time.sleep(0.01)
-            print ".",
-        if step1:
+            time.sleep(0.005)
+            #raw_input()
+            #print ".",
+        if remStep1:
             print "Moving extra step1"
-            self.moveArm1(step1)
-        if step2:
+            self.moveArm1(remStep1)
+        if remStep2:
             print "Moving extra step2"
-            self.moveArm2(step2)
-            
+            self.moveArm2(remStep2)
+        self.curAngle1,self.curAngle2 = self.getAngles(x,y)
+
     def motorDown(self,t=1.8):
         self.p.setAutoFeed(1)
         self.p.setSelect(0)
@@ -158,13 +165,13 @@ class Robot:
     def magnetOff(self):
         self.p.setDataStrobe(0)
         #self.p.setInitOut(0)
- 
+
     def moveArm1(self, steps=400):
         step = 1 if steps>0 else 7
         for i in xrange(abs(steps)):
             self.curStep1 = (self.curStep1+step)%8
             self.p.setData(STEPS[self.curStep1])
-            time.sleep(0.01)
+            time.sleep(0.005)
     
     def moveArm2(self, steps=400):
         steps = -steps #stupid 2nd arm moves in the opposite direction!
@@ -173,7 +180,7 @@ class Robot:
         for i in xrange(abs(steps)):
             self.curStep2 = (self.curStep2+step)%8
             self.p.setData(STEPS[self.curStep2]<<4)
-            time.sleep(0.01)
+            time.sleep(0.005)
             
     def test(self):
         self.motorDown()
