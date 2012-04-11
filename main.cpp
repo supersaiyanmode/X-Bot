@@ -18,6 +18,7 @@ CheckersBoard board(atoi(CONFIG["CAMERA_NUM"].c_str()));
 CheckersGame game;
 Server server(atoi(CONFIG["SERVER_PORT"].c_str()));
 Arm arm;
+int clientSocket = -1;
 
 std::string translate(int r, int c){
     if (r==-1 && c==-1)
@@ -32,26 +33,40 @@ std::string translate(int r, int c){
     std::cout<<"Result: "<<s.str()<<std::endl;
     return s.str();
 }
-void tempMove(int r1, int c1, int r2, int c2, std::vector<std::vector<Cell> >& cells){
-    static int clientSocket = -1;
-    if (clientSocket == -1){
-        clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-        sockaddr_in serv_addr;
-        std::memset((char*)&serv_addr, 0, sizeof(serv_addr));
-        
-        hostent *s= gethostbyname("192.168.1.100");
-        if (s == NULL) {
-            fprintf(stderr,"ERROR, no such host\n");
-            return;
-        }
-        serv_addr.sin_family = AF_INET;
-        std::memcpy((char *)&serv_addr.sin_addr.s_addr,(char *)s->h_addr, s->h_length);
-        serv_addr.sin_port = htons(21739);
-        if (::connect(clientSocket,(sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
-            printf("ERROR connecting");
-            return;
-        }
+
+void connect(){
+    clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in serv_addr;
+    std::memset((char*)&serv_addr, 0, sizeof(serv_addr));
+    
+    hostent *s= gethostbyname("192.168.1.100");
+    if (s == NULL) {
+        fprintf(stderr,"ERROR, no such host\n");
+        return;
     }
+    serv_addr.sin_family = AF_INET;
+    std::memcpy((char *)&serv_addr.sin_addr.s_addr,(char *)s->h_addr, s->h_length);
+    serv_addr.sin_port = htons(21739);
+    if (::connect(clientSocket,(sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+        printf("ERROR connecting");
+        ::exit(1);
+    }
+}
+
+void notifyState(std::string s){
+    if (clientSocket == -1)
+        connect();
+    
+    ::writeLine(clientSocket,s);
+    if (!::readLine(clientSocket,s)){
+        std::cout<<"Socket error!"<<std::endl;
+        return;
+    }
+}
+
+void tempMove(int r1, int c1, int r2, int c2, std::vector<std::vector<Cell> >& cells){
+    if (clientSocket == -1)
+        connect();
     
     std::string ret;
     //std::cout<<"Translate: ("<<r1<<","<<c1<<") -> "<<translate(r1,c1)<<std::endl;
@@ -180,16 +195,22 @@ int main(int argc, char **argv){
             //std::cout<<"Making move: "<<from<<" -> "<<to<<std::endl;
             if (!game.nextMove(from,to)){
                 std::cout<<"Error move!!!\n";
-                tempMove(move.r2,move.c2, move.r1, move.c1,cells);
+                tempMove(7-move.r2,move.c2, 7-move.r1, move.c1,cells);
+                continue;
             }
             std::cout<<"State after my move..\n";
             game.display();
-            /*while (game.state() != board.state()){
-                std::cout<<"Hammer <enter> after doing robot's move as above!: ";
-                std::getchar();
-            }*/
-            
+                        
             std::vector<PieceMove> moves(game.moves());
+            
+            std::string gameValue(game.value());
+            if (gameValue == "You Win !!!"){
+                notifyState("WIN");
+            }else if (gameValue == "Draw !!!"){
+                notifyState("DRAW");
+            }else if (gameValue == "I Win !!!"){
+                notifyState("LOSE");
+            }
             
             //TODO: Clean this section up. getCells() is bad. Centroid is provided in moveData
             for (std::vector<PieceMove>::iterator it=moves.begin(); it!=moves.end(); it++){
@@ -198,7 +219,7 @@ int main(int argc, char **argv){
             }
         }
         //check if arm move is successful!
-        if (game.state() != board.state()){
+        if (0 && game.state() != board.state()){
             std::cout<<"Grr.. looks like the arm didnt make the move. Can you make the move? :-(\n";
         }
         Thread<CheckersBoard,int>::sleep(sleepTime);
