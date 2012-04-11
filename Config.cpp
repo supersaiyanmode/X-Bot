@@ -15,7 +15,7 @@ Config::Config(std::string s):file(s){
     while (std::getline(in,line)){
         pos = line.find('#');
         if (pos != std::string::npos)
-            line = line.substr(0,9);
+            line = line.substr(0,pos);
         if (line == "")
             continue;
         pos = line.find_first_of(" \t");
