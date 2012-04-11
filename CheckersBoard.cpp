@@ -28,15 +28,24 @@ CheckersBoard::CheckersBoard(int cam):camera(cam){
  */
 
 std::string CheckersBoard::state(){
-    size_t RELIABLE_NUM = atoi(CONFIG["RELIABLE_DETECTION_COUNT"].c_str());
-    int sleepTimeOk = atoi(CONFIG["CAPTURE_OK_SLEEP_TIME"].c_str());
-    int sleepTimeErr = atoi(CONFIG["CAPTURE_ERROR_SLEEP_TIME"].c_str());
+    static size_t RELIABLE_NUM = atoi(CONFIG["RELIABLE_DETECTION_COUNT"].c_str());
+    static int sleepTimeOk = atoi(CONFIG["CAPTURE_OK_SLEEP_TIME"].c_str());
+    static int sleepTimeErr = atoi(CONFIG["CAPTURE_ERROR_SLEEP_TIME"].c_str());
+    static int lTrim = atoi(CONFIG["IMAGE_LTRIM"].c_str());
+    static int rTrim = atoi(CONFIG["IMAGE_RTRIM"].c_str());
+    static int tTrim = atoi(CONFIG["IMAGE_TTRIM"].c_str());
+    static int bTrim = atoi(CONFIG["IMAGE_BTRIM"].c_str());
+    
     std::vector<std::string> states;
     while (1){
         std::string res;
         cv::Mat img;
         do{
             img = camera.grab();
+            img = img(cv::Range(tTrim, img.size().height - bTrim), //row Range
+                        cv::Range(lTrim,img.size().width - rTrim)   //col Range
+                    );
+            
             res = analyse(img);
             window.showImage(img);
             
@@ -44,6 +53,7 @@ std::string CheckersBoard::state(){
             //window.waitKey(sleep);
             while (sleep > 0){ //new busy-capture-wait
                 //window.showImage(camera.grab());
+                camera.grab();
                 window.waitKey(10);
                 sleep -= 10;
             }
@@ -413,13 +423,20 @@ std::string CheckersBoard::analyse(cv::Mat img){
                 std::vector<cv::Mat> channels(3);
                 cv::split(cells[i][j].image, channels);
                 
+                
                 //checking RED Channel
                 int resultRed = mask.dot(channels[CHANNEL_RED])/(3.14159*radius*radius);
-                
                 //checking GREEN Channel
                 int resultGreen = mask.dot(channels[CHANNEL_GREEN])/(3.14159*radius*radius);
+                //checking BLUE Channel
+                int resultBlue = mask.dot(channels[CHANNEL_BLUE])/(3.14159*radius*radius);
                 
-                cells[i][j].type = resultRed > resultGreen? Cell::RED : Cell::GREEN;
+                int maxColor = std::max(std::max(resultBlue,resultGreen),resultRed);
+                
+                if (maxColor == resultRed)              cells[i][j].type =  Cell::RED;
+                else if (maxColor == resultGreen)       cells[i][j].type =  Cell::GREEN;
+                else if (maxColor == resultBlue)        cells[i][j].type =  Cell::BLUE;
+                
             }else{
                 
                 //(black n white)
@@ -433,18 +450,35 @@ std::string CheckersBoard::analyse(cv::Mat img){
         }
     }
     totalDetected++;
-    //current hack .. one green coin less that we have..
-    //cells[7][6].type = Cell::GREEN;
     
+    static std::map<Cell::CellType, char> tempMap;
+    
+    if (!tempMap.size()){
+        tempMap[Cell::BLACK] = ' ';
+        tempMap[Cell::WHITE] = '.';
+        
+        if (CONFIG["COLOR_PLAYER"]=="RED") tempMap[Cell::RED] = 'p';
+        else if (CONFIG["COLOR_PLAYER"]=="GREEN") tempMap[Cell::GREEN] = 'p';
+        else if (CONFIG["COLOR_PLAYER"]=="BLUE") tempMap[Cell::BLUE] = 'p';
+
+        if (CONFIG["COLOR_COMPUTER"]=="RED") tempMap[Cell::RED] = 'c';
+        else if (CONFIG["COLOR_COMPUTER"]=="GREEN") tempMap[Cell::GREEN] = 'c';
+        else if (CONFIG["COLOR_COMPUTER"]=="BLUE") tempMap[Cell::BLUE] = 'c';
+    }
     std::string s;
     for (int i=0; i<8; i++){
         for (int j=0; j<8; j++){
-            s.append(1,cells[i][j].type);
-            //std::cout<<(char)cells[i][j].type<<" ";
+            char cur = tempMap[cells[i][j].type];
+            if (cur == 'p' || cur == 'c' || cur == ' ' || cur == '.')
+                s.append(1,cur);
+            else{
+                std::cout<<"Got cell type: "<<(char)cells[i][j].type<<std::endl;
+                std::cout<<"In map: "<<tempMap[cells[i][j].type]<<std::endl;
+                std::cout<<"Invalid state encountered. Color recognition failed."<<std::endl;
+                return "";
+            }
         }
-        //std::cout<<std::endl;
     }
-    //std::cout<<s<<std::endl;
     (std::cout<<".").flush();
     return s;
 }
