@@ -16,7 +16,7 @@
 
 struct Cell{
     int row, column;
-    enum CellType{BLACK=' ', WHITE='.', RED='c', GREEN='p', BLUE='B'} type;
+    enum CellType{BLACK=' ', WHITE='.', RED='R', GREEN='G', BLUE='B'} type;
     
     cv::Mat image;
     std::vector<cv::Point> corners,subCorners;
