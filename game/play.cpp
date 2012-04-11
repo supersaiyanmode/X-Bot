@@ -63,7 +63,7 @@ void play(void *crap){
             t = -f(r->ptr[i], -4000, 4000, search_depth-1);
             if (t==max) {
                     j = q->num;
-                    std::cout<<"Current q->num: "<<j<<std::endl;
+                    //std::cout<<"Current q->num: "<<j<<std::endl;
                     q->ptr[j] = new_STATE();
                     copy_STATE(r->ptr[i], q->ptr[j]);
                     q->ptr[j]->value = max;
